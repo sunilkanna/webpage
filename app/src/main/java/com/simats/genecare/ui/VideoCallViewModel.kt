@@ -2,34 +2,86 @@ package com.simats.genecare.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simats.genecare.data.model.AppointmentDetailData
-import com.simats.genecare.data.repository.AuthRepository
+import com.simats.genecare.data.UserSession
+import com.simats.genecare.data.model.EndSessionRequest
+import com.simats.genecare.data.model.StartSessionRequest
+import com.simats.genecare.data.network.ApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class VideoCallViewModel : ViewModel() {
-    private val repository = AuthRepository()
+data class VideoCallState(
+    val isLoading: Boolean = true,
+    val meetingLink: String? = null,
+    val counselorName: String = "Doctor",
+    val patientName: String = "Patient",
+    val callStatus: String = "Connecting...",
+    val sessionEnded: Boolean = false,
+    val sessionDurationMinutes: Int = 0,
+    val consultationFee: Double = 0.0,
+    val jwt: String? = null,
+    val medicalReportUrl: String? = null,
+    val errorMessage: String? = null
+)
 
-    private val _appointmentDetails = MutableStateFlow<AppointmentDetailData?>(null)
-    val appointmentDetails: StateFlow<AppointmentDetailData?> = _appointmentDetails.asStateFlow()
+class VideoCallViewModel : ViewModel() {
+
+    private val _state = MutableStateFlow(VideoCallState())
+    val state: StateFlow<VideoCallState> = _state.asStateFlow()
+
+    // Keep legacy flows for backward compatibility
+    private val _appointmentDetails = MutableStateFlow<com.simats.genecare.data.model.AppointmentDetailData?>(null)
+    val appointmentDetails: StateFlow<com.simats.genecare.data.model.AppointmentDetailData?> = _appointmentDetails.asStateFlow()
 
     private val _callStatus = MutableStateFlow<String>("Connecting...")
     val callStatus: StateFlow<String> = _callStatus.asStateFlow()
 
-    fun fetchAppointmentDetails(appointmentId: Int) {
+    fun startSession(appointmentId: Int) {
+        val user = UserSession.getUser() ?: return
         viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true, errorMessage = null)
             try {
-                val response = repository.getAppointmentDetails(appointmentId)
+                val request = StartSessionRequest(
+                    appointmentId = appointmentId,
+                    userId = user.id
+                )
+                val response = ApiClient.api.startSession(request)
                 if (response.isSuccessful && response.body()?.status == "success") {
-                    _appointmentDetails.value = response.body()?.appointment
-                    _callStatus.value = "Connected"
+                    val body = response.body()!!
+                    if (!body.jwtError.isNullOrEmpty() && body.jwt.isNullOrEmpty()) {
+                        val msg = "JWT Error: ${body.jwtError}"
+                        _state.value = _state.value.copy(isLoading = false, callStatus = msg, errorMessage = msg)
+                        _callStatus.value = msg
+                    } else {
+                        val jwtParam = if (!body.jwt.isNullOrEmpty()) "?jwt=${body.jwt}" else ""
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            meetingLink = body.meetingLink + "$jwtParam#config.disableDeepLinking=true&config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.requireDisplayName=true",
+                            jwt = body.jwt,
+                            counselorName = body.counselorName ?: "Doctor",
+                            patientName = body.patientName ?: "Patient",
+                            medicalReportUrl = body.medicalReportUrl,
+                            callStatus = "Connected"
+                        )
+                        _callStatus.value = "Connected"
+                    }
                 } else {
-                    _callStatus.value = "Failed to load details"
+                    // Try to get error message from response body or error body
+                    val msg = response.body()?.message
+                        ?: try {
+                            val errorJson = response.errorBody()?.string()
+                            org.json.JSONObject(errorJson ?: "{}").optString("message", "Unknown error (HTTP ${response.code()})")
+                        } catch (e: Exception) {
+                            "Failed to start session (HTTP ${response.code()})"
+                        }
+                    _state.value = _state.value.copy(isLoading = false, callStatus = msg, errorMessage = msg)
+                    _callStatus.value = msg
                 }
             } catch (e: Exception) {
-                _callStatus.value = "Error: ${e.message}"
+                val msg = "Error: ${e.localizedMessage}"
+                _state.value = _state.value.copy(isLoading = false, callStatus = msg, errorMessage = msg)
+                _callStatus.value = msg
             }
         }
     }
@@ -37,16 +89,25 @@ class VideoCallViewModel : ViewModel() {
     fun endCall(appointmentId: Int, onCallEnded: () -> Unit) {
         viewModelScope.launch {
             try {
-                val response = repository.completeAppointment(appointmentId)
+                val request = EndSessionRequest(appointmentId = appointmentId)
+                val response = ApiClient.api.endSession(request)
                 if (response.isSuccessful && response.body()?.status == "success") {
-                    onCallEnded()
-                } else {
-                    // Handle failure, maybe force end anyway
-                    onCallEnded() 
+                    val body = response.body()!!
+                    _state.value = _state.value.copy(
+                        sessionEnded = true,
+                        sessionDurationMinutes = body.sessionDurationMinutes ?: 0,
+                        consultationFee = body.consultationFee ?: 0.0
+                    )
                 }
+                onCallEnded()
             } catch (e: Exception) {
                 onCallEnded()
             }
         }
+    }
+
+    // Legacy method for backward compatibility
+    fun fetchAppointmentDetails(appointmentId: Int) {
+        startSession(appointmentId)
     }
 }

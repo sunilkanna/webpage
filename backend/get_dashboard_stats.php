@@ -65,7 +65,11 @@ if ($user_type === 'Patient') {
                                 ORDER BY a.time_slot ASC");
     $list_stmt->bind_param("i", $user_id);
     $list_stmt->execute();
-    $appointments = $list_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $list_result = $list_stmt->get_result();
+    $appointments = [];
+    while ($row = $list_result->fetch_assoc()) {
+        $appointments[] = $row;
+    }
 
     // 4. Calculate Revenue This Month
     $rev_stmt = $conn->prepare("
@@ -74,8 +78,8 @@ if ($user_type === 'Patient') {
         JOIN appointments a ON p.appointment_id = a.id 
         WHERE a.counselor_id = ? 
         AND p.status = 'Completed' 
-        AND MONTH(p.payment_date) = MONTH(CURRENT_DATE()) 
-        AND YEAR(p.payment_date) = YEAR(CURRENT_DATE())
+        AND MONTH(p.created_at) = MONTH(CURRENT_DATE()) 
+        AND YEAR(p.created_at) = YEAR(CURRENT_DATE())
     ");
     $rev_stmt->bind_param("i", $user_id);
     $rev_stmt->execute();
@@ -90,6 +94,12 @@ if ($user_type === 'Patient') {
     $rate_stmt->execute();
     $avg_rating = $rate_stmt->get_result()->fetch_assoc()['avg_rating'] ?? 0;
     $avg_rating = round($avg_rating, 1);
+
+    // 5.1 Pending Requests Count
+    $pending_stmt = $conn->prepare("SELECT COUNT(*) as count FROM appointments WHERE counselor_id = ? AND status = 'Pending'");
+    $pending_stmt->bind_param("i", $user_id);
+    $pending_stmt->execute();
+    $pending_count = $pending_stmt->get_result()->fetch_assoc()['count'];
 
 
     // 6. Recent Reviews
@@ -111,6 +121,7 @@ if ($user_type === 'Patient') {
     $response["counselor_stats"] = [
         "todays_sessions" => (int)$today_count,
         "total_patients" => (int)$total_patients,
+        "pending_requests_count" => (int)$pending_count,
         "avg_rating" => (double)$avg_rating,
         "revenue_this_month" => $revenue_formatted,
         "today_appointments" => $appointments,

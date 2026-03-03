@@ -8,8 +8,10 @@ if (!$appointment_id) {
     exit();
 }
 
-// Fetch appointment details along with patient and counselor info
-$sql = "SELECT a.*, 
+// Fetch appointment details along with patient and counselor info, including session fields
+$sql = "SELECT a.id, a.patient_id, a.counselor_id, a.appointment_date, a.time_slot, 
+        a.status, a.meeting_link, a.session_start_time, a.session_end_time, 
+        a.session_duration_minutes, a.created_at, a.medical_report_url,
         p.full_name as patient_name, 
         c.full_name as counselor_name,
         cp.consultation_fee

@@ -1,10 +1,12 @@
 <?php
 include 'db_connect.php';
 
-$sql = "SELECT cq.*, u.full_name, u.email 
+$sql = "SELECT DISTINCT cq.user_id, cq.*, u.full_name, u.email 
         FROM counselor_qualifications cq 
         JOIN users u ON cq.user_id = u.id 
-        WHERE cq.status = 'Pending'";
+        WHERE cq.status = 'Pending'
+        GROUP BY cq.user_id
+        ORDER BY cq.id DESC";
 
 $result = $conn->query($sql);
 

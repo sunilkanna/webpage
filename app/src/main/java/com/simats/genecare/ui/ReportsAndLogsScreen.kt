@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,6 +40,15 @@ fun ReportsAndLogsScreen(
     viewModel: ReportsAndLogsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            viewModel.uploadReport(it, context)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -58,6 +68,20 @@ fun ReportsAndLogsScreen(
                     )
                 )
             )
+        },
+        floatingActionButton = {
+            if (uiState.selectedTab == 0) {
+                ExtendedFloatingActionButton(
+                    onClick = { launcher.launch("*/*") },
+                    containerColor = Color(0xFF8E24AA),
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Upload Report")
+                }
+            }
         },
         containerColor = Color(0xFFF5F7FA)
     ) { padding ->
@@ -95,19 +119,30 @@ fun ReportsAndLogsScreen(
 
             if (uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = Color(0xFF8E24AA))
                 }
             } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (uiState.selectedTab == 0) {
-                        items(uiState.reports) { report ->
-                            ReportCard(report)
-                        }
-                    } else {
-                        items(uiState.logs) { log ->
-                            LogCard(log)
+                if (uiState.selectedTab == 0 && uiState.reports.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No reports found", color = Color.Gray)
+                    }
+                } else if (uiState.selectedTab == 1 && uiState.logs.isEmpty()) {
+                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No system logs found", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (uiState.selectedTab == 0) {
+                            items(uiState.reports) { report ->
+                                ReportCard(report)
+                            }
+                        } else {
+                            items(uiState.logs) { log ->
+                                LogCard(log)
+                            }
                         }
                     }
                 }

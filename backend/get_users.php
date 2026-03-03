@@ -1,7 +1,7 @@
 <?php
 include 'db_connect.php';
 
-$sql = "SELECT id, full_name as name, email, user_type as role, 'Active' as status FROM users";
+$sql = "SELECT DISTINCT id, full_name as name, email, user_type as role, 'Active' as status FROM users";
 // Note: 'status' column doesn't exist in 'users' yet. I should add it if I want suspension.
 // For now, I'll default to Active.
 

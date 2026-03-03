@@ -57,6 +57,7 @@ fun CounselorPendingDashboardScreen(
     viewModel: CounselorViewModel
 ) {
     val qualificationData by viewModel.qualificationData.collectAsState()
+    val currentCounselor by viewModel.currentCounselor.collectAsState()
 
     Column(
         modifier = Modifier
@@ -116,191 +117,193 @@ fun CounselorPendingDashboardScreen(
                 .padding(horizontal = 16.dp)
                 .padding(top = 16.dp)
         ) {
-            // Dashboard Features Locked Card
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    Color(0xFFFFF176),
-                                    Color(0xFF26A69A)
-                                )
-                            )
-                        )
-                        .padding(16.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.Top) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.3f)),
-                            contentAlignment = Alignment.Center
+            // Verification Status Cards (Locked, Approved, Rejected, or Pending)
+            when {
+                currentCounselor?.status?.equals("Approved", ignoreCase = true) == true -> {
+                    // Approved State
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null,
-                                tint = Color(0xFF004D40),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFC8E6C9)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = Color(0xFF2E7D32),
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Dashboard Features Locked",
+                                text = "Verification Approved!",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF004D40)
+                                color = Color(0xFF1B5E20)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "You cannot access counselor features until your credentials are verified and approved by our admin team. All actions are temporarily restricted.",
+                                text = "Your profile has been verified. You now have full access to the counselor dashboard.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF004D40).copy(alpha = 0.8f)
+                                color = Color(0xFF2E7D32),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { navController.navigate("counselor_dashboard") },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                                shape = RoundedCornerShape(24.dp)
+                            ) {
+                                Text("Go to Dashboard", color = Color.White)
+                            }
+                        }
+                    }
+                }
+                currentCounselor?.status?.equals("Rejected", ignoreCase = true) == true -> {
+                    // Rejected State
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFFFCDD2)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = Color(0xFFC62828),
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Application Rejected",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFB71C1C)
+                            )
+                            Text(
+                                text = currentCounselor?.rejectionReason ?: "Your application did not meet our criteria.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFC62828),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = 8.dp)
                             )
                         }
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Verification Status Card
-            val currentCounselor by viewModel.currentCounselor.collectAsState()
-            
-            if (currentCounselor?.status == "Approved") {
-                 Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFC8E6C9)),
-                            contentAlignment = Alignment.Center
+                else -> {
+                    // Locked / Pending State
+                    Column {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = Color(0xFF2E7D32),
-                                modifier = Modifier.size(28.dp)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        Brush.linearGradient(
+                                            colors = listOf(
+                                                Color(0xFFFFF176),
+                                                Color(0xFF26A69A)
+                                            )
+                                        )
+                                    )
+                                    .padding(16.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.Top) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.3f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Lock,
+                                            contentDescription = null,
+                                            tint = Color(0xFF004D40),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "Dashboard Features Locked",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF004D40)
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "You cannot access counselor features until your credentials are verified and approved by our admin team. All actions are temporarily restricted.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color(0xFF004D40).copy(alpha = 0.8f)
+                                        )
+                                    }
+                                }
+                            }
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Verification Approved!",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1B5E20)
-                        )
-                        Text(
-                            text = "Your profile has been verified. You now have full access to the counselor dashboard.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF2E7D32),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { navController.navigate("counselor_dashboard") },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                            shape = RoundedCornerShape(24.dp)
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Go to Dashboard", color = Color.White)
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFFFECB3)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccessTime,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFA000),
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "Verification in Progress",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Your documents are being reviewed by our admin team. This typically takes 24-48 hours.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
                         }
-                    }
-                }
-            } else if (currentCounselor?.status == "Rejected") {
-                 Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFFFCDD2)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = Color(0xFFC62828),
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Application Rejected",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFB71C1C)
-                        )
-                        Text(
-                            text = currentCounselor?.rejectionReason ?: "Your application did not meet our criteria.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFC62828),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-            } else {
-                // Pending State
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // Clock Icon
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFFFECB3)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AccessTime,
-                                contentDescription = null,
-                                tint = Color(0xFFFFA000),
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Verification in Progress",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Your documents are being reviewed by our admin team. This typically takes 24-48 hours.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
                     }
                 }
             }

@@ -29,6 +29,10 @@ import androidx.navigation.compose.rememberNavController
 import com.simats.genecare.ui.theme.GenecareTheme
 
 
+import androidx.compose.ui.platform.LocalContext
+import android.app.Activity
+import com.simats.genecare.RazorpayCallbackObject
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionBillScreen(navController: NavController, appointmentId: Int = 1) {
@@ -36,9 +40,62 @@ fun SessionBillScreen(navController: NavController, appointmentId: Int = 1) {
     val appointmentDetails by viewModel.appointmentDetails.collectAsState()
     val billDetails by viewModel.billDetails.collectAsState()
     val paymentState by viewModel.paymentState.collectAsState()
+    val checkoutData by viewModel.razorpayCheckoutData.collectAsState()
+
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     LaunchedEffect(appointmentId) {
-        viewModel.loadBill(appointmentId)
+        val userType = com.simats.genecare.data.UserSession.getUserType()
+        if (userType != "Patient") {
+            navController.navigate("counselor_dashboard") {
+                popUpTo("session_bill/$appointmentId") { inclusive = true }
+            }
+        } else {
+            viewModel.loadBill(appointmentId)
+        }
+    }
+
+    LaunchedEffect(checkoutData) {
+        checkoutData?.let { data ->
+            try {
+                val checkout = com.razorpay.Checkout()
+                checkout.setKeyID(data.keyId)
+
+                val options = org.json.JSONObject()
+                options.put("name", "Genecare")
+                options.put("description", "Consultation Payment")
+                options.put("order_id", data.orderId)
+                options.put("currency", "INR")
+                options.put("amount", data.amount) // Amount is already in paise
+                options.put("theme.color", "#00838F")
+
+                RazorpayCallbackObject.onSuccess = { paymentData ->
+                    if (paymentData != null) {
+                        viewModel.verifyPayment(
+                            paymentId = data.internalPaymentId,
+                            orderId = data.orderId,
+                            razorpayPaymentId = paymentData.paymentId,
+                            signature = paymentData.signature ?: "",
+                            onSuccess = { navController.navigate("payment_success/${data.internalPaymentId}") }
+                        )
+                    }
+                }
+                RazorpayCallbackObject.onError = { _, _ ->
+                    viewModel.setPaymentError("Payment was cancelled or failed")
+                }
+
+                activity?.let {
+                    checkout.open(it, options)
+                } ?: run {
+                    viewModel.setPaymentError("Unable to open payment gateway")
+                }
+            } catch (e: Exception) {
+                viewModel.setPaymentError(e.message ?: "Failed to initialize payment")
+            } finally {
+                viewModel.clearCheckoutData()
+            }
+        }
     }
 
     var selectedPaymentMethod by remember { mutableStateOf("UPI") }
@@ -59,33 +116,44 @@ fun SessionBillScreen(navController: NavController, appointmentId: Int = 1) {
             )
         },
         bottomBar = {
-            Button(
-                onClick = { 
-                    viewModel.processPayment(appointmentId, selectedPaymentMethod) {
-                        navController.navigate("payment_success") 
-                    }
-                },
-                enabled = paymentState != "Processing",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00838F)) // Teal color
-            ) {
-                if (paymentState == "Processing") {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    val amount = billDetails?.totalAmount ?: 0.0
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (paymentState.startsWith("Error")) {
                     Text(
-                        text = "Pay ₹${String.format("%.2f", amount)}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        text = paymentState,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
+                }
+                
+                Button(
+                    onClick = { 
+                        viewModel.processPayment(appointmentId, selectedPaymentMethod)
+                    },
+                    enabled = paymentState != "Processing" && paymentState != "Verifying",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00838F)) // Teal color
+                ) {
+                    if (paymentState == "Processing" || paymentState == "Verifying") {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (paymentState == "Processing") "Initializing..." else "Verifying...")
+                    } else {
+                        val amount = billDetails?.totalAmount ?: 0.0
+                        Text(
+                            text = "Pay ₹${String.format("%.2f", amount)}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         },
+
         containerColor = Color.White
     ) { paddingValues ->
         Column(

@@ -10,14 +10,18 @@ $sql = "SELECT u.id, u.full_name, cp.profile_image_url, cp.specialization,
 
 $result = $conn->query($sql);
 
+if (!$result) {
+    echo json_encode(["status" => "error", "message" => "Query failed: " . $conn->error]);
+    $conn->close();
+    exit();
+}
+
 $counselors = [];
-if ($result && $result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        // Ensure numeric types are correct for JSON
-        $row['id'] = (int)$row['id'];
-        $row['rating'] = (float)$row['rating'];
-        $counselors[] = $row;
-    }
+while($row = $result->fetch_assoc()) {
+    // Ensure numeric types are correct for JSON
+    $row['id'] = (int)$row['id'];
+    $row['rating'] = (float)$row['rating'];
+    $counselors[] = $row;
 }
 
 echo json_encode(["status" => "success", "counselors" => $counselors]);

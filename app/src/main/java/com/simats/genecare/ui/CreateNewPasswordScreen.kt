@@ -31,11 +31,35 @@ import com.simats.genecare.ui.theme.GenecareTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateNewPasswordScreen(navController: NavController, email: String) {
+fun CreateNewPasswordScreen(
+    navController: NavController,
+    email: String,
+    viewModel: ForgotPasswordViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
     var confirmPasswordVisibility by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val resetPasswordState by viewModel.resetPasswordState.collectAsState()
+
+    LaunchedEffect(resetPasswordState) {
+        when (resetPasswordState) {
+            is OtpState.Success -> {
+                android.widget.Toast.makeText(context, (resetPasswordState as OtpState.Success).message, android.widget.Toast.LENGTH_SHORT).show()
+                navController.navigate("password_reset_successful") {
+                    popUpTo("forgot_password") { inclusive = true }
+                }
+                viewModel.resetResetPasswordState()
+            }
+            is OtpState.Error -> {
+                android.widget.Toast.makeText(context, (resetPasswordState as OtpState.Error).message, android.widget.Toast.LENGTH_LONG).show()
+                viewModel.resetResetPasswordState()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -154,20 +178,26 @@ fun CreateNewPasswordScreen(navController: NavController, email: String) {
                                   password.any { it.isLowerCase() } && 
                                   password.any { it.isDigit() } && 
                                   password.any { !it.isLetterOrDigit() }
-                                  
-            Button(
-                onClick = { navController.navigate("password_reset_successful") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF008080),
-                    disabledContainerColor = Color(0xFFB2DFDB)
-                ),
-                enabled = isPasswordValid && password == confirmPassword
-            ) {
-                Text("Reset Password", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+            if (resetPasswordState is OtpState.Loading) {
+                CircularProgressIndicator()
+            } else {
+                Button(
+                    onClick = {
+                        viewModel.resetPassword(email, password)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF008080),
+                        disabledContainerColor = Color(0xFFB2DFDB)
+                    ),
+                    enabled = isPasswordValid && password == confirmPassword
+                ) {
+                    Text("Reset Password", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,9 +28,30 @@ import com.simats.genecare.ui.theme.GenecareTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SessionFeedbackScreen(navController: NavController) {
+fun SessionFeedbackScreen(navController: NavController, appointmentId: Int = 1) {
+    val viewModel: SessionBillViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val appointmentDetails by viewModel.appointmentDetails.collectAsState()
+
+    androidx.compose.runtime.LaunchedEffect(appointmentId) {
+        viewModel.loadBill(appointmentId)
+    }
+
     var rating by remember { mutableIntStateOf(0) }
     var feedbackText by remember { mutableStateOf("") }
+
+    val feedbackState by viewModel.feedbackState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(feedbackState) {
+        if (feedbackState == "Success") {
+            android.widget.Toast.makeText(context, "Feedback submitted successfully!", android.widget.Toast.LENGTH_SHORT).show()
+            navController.navigate("dashboard") {
+                popUpTo("dashboard") { inclusive = true }
+            }
+        } else if (feedbackState.startsWith("Error")) {
+            android.widget.Toast.makeText(context, feedbackState, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -65,13 +88,18 @@ fun SessionFeedbackScreen(navController: NavController) {
                     .background(Color(0xFFE0F7FA)),
                 contentAlignment = Alignment.Center
             ) {
-                 Text("SJ", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF00ACC1))
+                 Text(
+                     text = appointmentDetails?.counselorName?.take(2)?.uppercase() ?: "DR", 
+                     fontSize = 32.sp, 
+                     fontWeight = FontWeight.Bold, 
+                     color = Color(0xFF00ACC1)
+                 )
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Dr. Sarah Johnson",
+                text = appointmentDetails?.counselorName ?: "Doctor",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF37474F)
@@ -123,14 +151,16 @@ fun SessionFeedbackScreen(navController: NavController) {
             
             Spacer(modifier = Modifier.weight(1f))
             
+            if (feedbackState == "Submitting") {
+                CircularProgressIndicator(color = Color(0xFF00838F))
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             Button(
                 onClick = { 
-                     // Navigate to Dashboard
-                     navController.navigate("dashboard") {
-                         popUpTo("dashboard") { inclusive = true }
-                     }
+                     viewModel.submitFeedback(appointmentId, rating, feedbackText)
                 },
-                enabled = rating > 0,
+                enabled = rating > 0 && feedbackState != "Submitting",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

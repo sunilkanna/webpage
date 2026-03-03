@@ -47,6 +47,7 @@ fun NavGraph(startDestination: String = "splash") {
     val bookingViewModel: BookingViewModel = viewModel()
     val counselorViewModel: CounselorViewModel = viewModel()
     val notificationViewModel: NotificationViewModel = viewModel()
+    val forgotPasswordViewModel: com.simats.genecare.ui.ForgotPasswordViewModel = viewModel()
     NavHost(navController = navController, startDestination = startDestination) {
         composable("splash") {
             SplashScreen(navController = navController)
@@ -61,13 +62,13 @@ fun NavGraph(startDestination: String = "splash") {
             SignInScreen(navController = navController)
         }
         composable("forgot_password") {
-            ForgotPasswordScreen(navController = navController)
+            ForgotPasswordScreen(navController = navController, viewModel = forgotPasswordViewModel)
         }
         composable("enter_verification_code/{email}") { backStackEntry ->
-            EnterVerificationCodeScreen(navController = navController, email = backStackEntry.arguments?.getString("email") ?: "")
+            EnterVerificationCodeScreen(navController = navController, email = backStackEntry.arguments?.getString("email") ?: "", viewModel = forgotPasswordViewModel)
         }
         composable("create_new_password/{email}") { backStackEntry ->
-            CreateNewPasswordScreen(navController = navController, email = backStackEntry.arguments?.getString("email") ?: "")
+            CreateNewPasswordScreen(navController = navController, email = backStackEntry.arguments?.getString("email") ?: "", viewModel = forgotPasswordViewModel)
         }
         composable("password_reset_successful") {
             PasswordResetSuccessfulScreen(navController = navController)
@@ -103,10 +104,17 @@ fun NavGraph(startDestination: String = "splash") {
             RiskAssessmentScreen(navController = navController)
         }
         composable("dashboard") {
-            DashboardScreen(navController = navController)
+            DashboardScreen(navController = navController, bookingViewModel = bookingViewModel)
         }
         composable("book_session") {
             BookSessionScreen(navController = navController, viewModel = bookingViewModel)
+        }
+        composable(
+            "appointment_details/{appointmentId}",
+            arguments = listOf(androidx.navigation.navArgument("appointmentId") { type = androidx.navigation.NavType.IntType })
+        ) { backStackEntry ->
+            val appointmentId = backStackEntry.arguments?.getInt("appointmentId") ?: 0
+            AppointmentDetailsScreen(navController = navController, viewModel = bookingViewModel, appointmentId = appointmentId)
         }
         composable("appointment_details") {
             AppointmentDetailsScreen(navController = navController, viewModel = bookingViewModel)
@@ -115,7 +123,7 @@ fun NavGraph(startDestination: String = "splash") {
             AdminDashboardScreen(
                 navController = navController,
                 onLogout = {
-                    navController.navigate("sign_in") {
+                    navController.navigate("welcome") {
                         popUpTo("admin_dashboard") { inclusive = true }
                     }
                 }
@@ -134,7 +142,7 @@ fun NavGraph(startDestination: String = "splash") {
             com.simats.genecare.ui.CounselorDashboardScreen(
                 navController = navController,
                 onSignOut = {
-                    navController.navigate("sign_in") {
+                    navController.navigate("welcome") {
                         popUpTo("counselor_dashboard") { inclusive = true }
                     }
                 }
@@ -143,17 +151,33 @@ fun NavGraph(startDestination: String = "splash") {
         composable("session_requests") {
             SessionRequestsScreen(navController = navController, viewModel = counselorViewModel)
         }
-        composable("video_call") {
-            VideoCallScreen(navController = navController)
+        composable(
+            "video_call/{appointmentId}",
+            arguments = listOf(androidx.navigation.navArgument("appointmentId") { type = androidx.navigation.NavType.IntType })
+        ) { backStackEntry ->
+            val appointmentId = backStackEntry.arguments?.getInt("appointmentId") ?: 0
+            VideoCallScreen(navController = navController, appointmentId = appointmentId)
         }
-        composable("session_bill") {
-            SessionBillScreen(navController = navController)
+        composable(
+            "session_bill/{appointmentId}",
+            arguments = listOf(androidx.navigation.navArgument("appointmentId") { type = androidx.navigation.NavType.IntType })
+        ) { backStackEntry ->
+            val appointmentId = backStackEntry.arguments?.getInt("appointmentId") ?: 0
+            SessionBillScreen(navController = navController, appointmentId = appointmentId)
         }
-        composable("payment_success") {
-            PaymentSuccessScreen(navController = navController)
+        composable(
+            "payment_success/{appointmentId}",
+            arguments = listOf(androidx.navigation.navArgument("appointmentId") { type = androidx.navigation.NavType.IntType })
+        ) { backStackEntry ->
+            val appointmentId = backStackEntry.arguments?.getInt("appointmentId") ?: 0
+            PaymentSuccessScreen(navController = navController, appointmentId = appointmentId)
         }
-        composable("session_feedback") {
-            SessionFeedbackScreen(navController = navController)
+        composable(
+            "session_feedback/{appointmentId}",
+            arguments = listOf(androidx.navigation.navArgument("appointmentId") { type = androidx.navigation.NavType.IntType })
+        ) { backStackEntry ->
+            val appointmentId = backStackEntry.arguments?.getInt("appointmentId") ?: 0
+            SessionFeedbackScreen(navController = navController, appointmentId = appointmentId)
         }
         composable("user_management") {
             com.simats.genecare.ui.UserManagementScreen(navController = navController)
@@ -196,6 +220,9 @@ fun NavGraph(startDestination: String = "splash") {
         }
         composable("counselor_settings") {
             com.simats.genecare.ui.CounselorSettingsScreen(navController = navController)
+        }
+        composable("counselor_edit_profile") {
+            com.simats.genecare.ui.CounselorEditProfileScreen(navController = navController)
         }
     }
 }

@@ -39,7 +39,8 @@ import androidx.compose.runtime.*
 @Composable
 fun DashboardScreen(
     navController: NavController,
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel = viewModel(),
+    bookingViewModel: BookingViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
@@ -72,7 +73,7 @@ fun DashboardScreen(
                     val stats = state.stats.patientStats
                     
                     // Upcoming Appointment Card
-                    AppointmentCard(navController, stats?.upcomingAppointment)
+                    AppointmentCard(navController, stats?.upcomingAppointment, bookingViewModel)
 
                     Spacer(modifier = Modifier.height(32.dp))
 
@@ -84,7 +85,11 @@ fun DashboardScreen(
                         color = Color(0xFF0D1B2A)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    QuickActionsGrid(navController)
+                    QuickActionsGrid(
+                        navController = navController,
+                        counselorId = stats?.upcomingAppointment?.counselorId,
+                        counselorName = stats?.upcomingAppointment?.counselorName
+                    )
 
                     Spacer(modifier = Modifier.height(32.dp))
 
@@ -196,7 +201,7 @@ fun DashboardHeader(navController: NavController, context: Context, name: String
 }
 
 @Composable
-fun AppointmentCard(navController: NavController, appointment: com.simats.genecare.data.model.AppointmentData?) {
+fun AppointmentCard(navController: NavController, appointment: com.simats.genecare.data.model.AppointmentData?, bookingViewModel: BookingViewModel? = null) {
     val isPending = appointment?.status == "Pending"
     val isConfirmed = appointment?.status == "Confirmed"
     
@@ -205,7 +210,14 @@ fun AppointmentCard(navController: NavController, appointment: com.simats.geneca
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate("appointment_details") }
+            .clickable { 
+                if (appointment != null) {
+                    bookingViewModel?.setAppointmentId(appointment.id)
+                    navController.navigate("appointment_details/${appointment.id}") 
+                } else {
+                    navController.navigate("appointment_details") 
+                }
+            }
     ) {
         Box(
             modifier = Modifier
@@ -287,7 +299,10 @@ fun AppointmentCard(navController: NavController, appointment: com.simats.geneca
                     
                     Button(
                         onClick = { 
-                            if (appointment != null) navController.navigate("appointment_details")
+                            if (appointment != null) {
+                                bookingViewModel?.setAppointmentId(appointment.id)
+                                navController.navigate("appointment_details/${appointment.id}")
+                            }
                             else navController.navigate("book_session")
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
@@ -311,7 +326,11 @@ fun AppointmentCard(navController: NavController, appointment: com.simats.geneca
 }
 
 @Composable
-fun QuickActionsGrid(navController: NavController) {
+fun QuickActionsGrid(
+    navController: NavController,
+    counselorId: Int? = null,
+    counselorName: String? = null
+) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -347,8 +366,13 @@ fun QuickActionsGrid(navController: NavController) {
                 backgroundColor = Color(0xFFF3E5F5),
                 modifier = Modifier.weight(1f),
                 onClick = { 
-                    // Use counselor from upcoming appointment if available, otherwise default
-                    navController.navigate("chat/2/Dr. Sarah Johnson") 
+                    if (counselorId != null && counselorName != null) {
+                        navController.navigate("chat/$counselorId/$counselorName") 
+                    } else {
+                        // If no appointment, maybe take them to book session or show toast
+                        // For now, let's just navigate to a general message or book session
+                        navController.navigate("book_session")
+                    }
                 }
             )
             Spacer(modifier = Modifier.width(16.dp))

@@ -38,8 +38,11 @@ fun UserManagementScreen(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
-    
     val users = remember { mutableStateListOf<UserData>() }
+    
+    val snackbarHostState = remember { SnackbarHostState() }
+    var userToDelete by remember { mutableStateOf<UserData?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         isLoading = true
@@ -56,7 +59,45 @@ fun UserManagementScreen(navController: NavController) {
         }
     }
 
+    if (showDeleteDialog && userToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete User") },
+            text = { Text("Are you sure you want to delete ${userToDelete?.name}? This action will permanently remove all their associated data.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val user = userToDelete!!
+                        showDeleteDialog = false
+                        scope.launch {
+                            try {
+                                val res = ApiClient.api.manageUser(ManageUserRequest(user.id.toInt(), "delete"))
+                                if (res.isSuccessful) {
+                                    users.remove(user)
+                                    snackbarHostState.showSnackbar("User deleted successfully")
+                                } else {
+                                    snackbarHostState.showSnackbar("Error: ${res.message()}")
+                                }
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar("Failed to delete user")
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("User Management", fontWeight = FontWeight.Bold) },
@@ -105,16 +146,13 @@ fun UserManagementScreen(navController: NavController) {
                         it.email.contains(searchQuery, ignoreCase = true) 
                     }) { user ->
                         UserCard(user = user, onDelete = { 
-                            scope.launch {
-                                try {
-                                    val res = ApiClient.api.manageUser(ManageUserRequest(user.id.toInt(), "delete"))
-                                    if (res.isSuccessful) {
-                                        users.remove(user)
-                                    }
-                                } catch (e: Exception) {}
-                            }
+                            userToDelete = user
+                            showDeleteDialog = true
                         }, onSuspend = { 
                             // TODO: Add suspension logic if backend supports it
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Suspension feature coming soon")
+                            }
                         })
                     }
                 }

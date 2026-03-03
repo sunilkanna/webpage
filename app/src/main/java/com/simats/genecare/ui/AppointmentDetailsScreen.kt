@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,10 +39,19 @@ import com.simats.genecare.ui.theme.GenecareTheme
 @Composable
 fun AppointmentDetailsScreen(
     navController: NavController,
-    viewModel: BookingViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: BookingViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    appointmentId: Int? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val counselor = uiState.selectedCounselor
+
+    // Fetch live appointment status from backend when screen loads
+    LaunchedEffect(appointmentId) {
+        if (appointmentId != null && appointmentId != 0) {
+            viewModel.setAppointmentId(appointmentId)
+        }
+        viewModel.fetchAppointmentStatus(appointmentId)
+    }
 
     Scaffold(
         topBar = {
@@ -76,24 +86,37 @@ fun AppointmentDetailsScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Status Card
-            StatusCard(isApproved = uiState.isSessionApproved)
+            if (uiState.isLoadingStatus) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF00ACC1))
+                }
+            } else {
+                // Status Card
+                StatusCard(isApproved = uiState.isSessionApproved)
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Counselor Details Card
+            // Counselor Details Card - use live data if available, fallback to local
+            val displayDate = uiState.confirmedDate ?: "${uiState.monthName} ${uiState.selectedDate}, ${uiState.currentYear}"
+            val displayTime = uiState.confirmedTime ?: uiState.selectedTime ?: "--:--"
+            val displayCounselorName = uiState.confirmedCounselorName
+
             if (counselor != null) {
                 CounselorDetailsCard(
                     counselor = counselor,
-                    date = "January ${uiState.selectedDate}, 2026",
-                    time = uiState.selectedTime ?: "--:--"
+                    date = displayDate,
+                    time = displayTime
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Note Card
-            NoteCard(counselorName = counselor?.name ?: "the counselor", isApproved = uiState.isSessionApproved)
+            NoteCard(counselorName = displayCounselorName ?: counselor?.name ?: "the counselor", isApproved = uiState.isSessionApproved)
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -101,7 +124,8 @@ fun AppointmentDetailsScreen(
             Button(
                 onClick = { 
                     if (uiState.isSessionApproved) {
-                        navController.navigate("video_call")
+                        val apptId = uiState.lastBookedAppointmentId ?: 0
+                        navController.navigate("video_call/$apptId")
                     }
                 },
                 enabled = uiState.isSessionApproved,

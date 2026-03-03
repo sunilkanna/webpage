@@ -13,6 +13,7 @@ class SessionManager(context: Context) {
         private const val KEY_USER_ID = "userId"
         private const val KEY_FULL_NAME = "fullName"
         private const val KEY_USER_TYPE = "userType"
+        private const val KEY_VERIFICATION_STATUS = "verificationStatus"
     }
 
     fun saveUserSession(user: User) {
@@ -21,6 +22,7 @@ class SessionManager(context: Context) {
         editor.putInt(KEY_USER_ID, user.id)
         editor.putString(KEY_FULL_NAME, user.fullName)
         editor.putString(KEY_USER_TYPE, user.userType)
+        editor.putString(KEY_VERIFICATION_STATUS, user.verificationStatus)
         editor.apply()
     }
 
@@ -29,9 +31,10 @@ class SessionManager(context: Context) {
         val id = prefs.getInt(KEY_USER_ID, -1)
         val fullName = prefs.getString(KEY_FULL_NAME, null)
         val userType = prefs.getString(KEY_USER_TYPE, null)
+        val verificationStatus = prefs.getString(KEY_VERIFICATION_STATUS, null)
 
         return if (id != -1 && fullName != null && userType != null) {
-            User(id, fullName, userType)
+            User(id, fullName, userType, verificationStatus)
         } else {
             null
         }

@@ -54,8 +54,15 @@ class BookingRepository {
     
     fun getTimeSlots(): List<TimeSlot> = _timeSlots
 
-    suspend fun bookSession(counselorId: String, date: String, time: String) {
-        try {
+    suspend fun bookSession(
+        counselorId: String, 
+        date: String, 
+        time: String, 
+        reportUrl: String? = null,
+        reason: String? = "General Consultation",
+        type: String? = "Video Call"
+    ): Int? {
+        return try {
             val patientId = UserSession.getUser()?.id ?: 1
             val cId = counselorId.toIntOrNull() ?: 1
             
@@ -64,11 +71,12 @@ class BookingRepository {
             val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
             val formattedDate = try {
                 val parsedDate = inputFormat.parse(date)
-                outputFormat.format(parsedDate)
+                if (parsedDate != null) {
+                    outputFormat.format(parsedDate)
+                } else {
+                    SimpleDateFormat("yyyy-MM-dd", Locale.US).format(java.util.Date())
+                }
             } catch (e: Exception) {
-                // Formatting might depend on exact UI string, e.g. "January 15" without year?
-                // Assuming year is current year if missing or UI provides full string.
-                // Fallback to today's formatting if parsing fails
                 SimpleDateFormat("yyyy-MM-dd", Locale.US).format(java.util.Date()) 
             }
 
@@ -76,19 +84,37 @@ class BookingRepository {
                 patientId = patientId,
                 counselorId = cId,
                 date = formattedDate,
-                time = time
+                time = time,
+                medicalReportUrl = reportUrl,
+                reason = reason,
+                appointmentType = type
             )
 
             val response = com.simats.genecare.data.network.ApiClient.api.bookAppointment(request)
             
             if (response.isSuccessful && response.body()?.status == "success") {
-               // Successfully booked
+               response.body()?.appointmentId
+            } else {
+                null
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            null
         }
-        
-        // Optimistic UI update or just rely on API
+    }
+
+    suspend fun fetchAppointmentDetails(appointmentId: Int): com.simats.genecare.data.model.AppointmentDetailData? {
+        return try {
+            val response = com.simats.genecare.data.network.ApiClient.api.getAppointmentDetails(appointmentId)
+            if (response.isSuccessful && response.body()?.status == "success") {
+                response.body()?.appointment
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     private fun getInitials(name: String): String {

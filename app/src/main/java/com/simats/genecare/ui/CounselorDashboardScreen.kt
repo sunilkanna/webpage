@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.AttachMoney
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.DateRange
@@ -51,12 +50,12 @@ fun CounselorDashboardScreen(
     val user = UserSession.getUser()
 
     Scaffold(
-        containerColor = Color.White
+        containerColor = Color(0xFFF8F9FE) // Soft off-white background
     ) { padding ->
         when (val state = uiState) {
             is DashboardState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFF009688))
+                    CircularProgressIndicator(color = Color(0xFF5C6BC0))
                 }
             }
             is DashboardState.Success -> {
@@ -77,14 +76,14 @@ fun CounselorDashboardScreen(
                         TodaysSchedule(
                             appointments = stats?.todayAppointments ?: emptyList(),
                             onViewAllClick = { /* TODO */ },
-                            onStartClick = { navController.navigate("video_call") }
+                            onStartClick = { appointmentId -> navController.navigate("video_call/$appointmentId") }
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                     }
 
                     // Quick Actions
                     item {
-                        QuickActionsSection(navController)
+                        QuickActionsSection(navController, stats?.pendingRequestsCount ?: 0)
                         Spacer(modifier = Modifier.height(24.dp))
                     }
 
@@ -115,12 +114,12 @@ fun TopSection(onSignOut: () -> Unit, navController: NavController, name: String
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(400.dp) // Adjusted height for 2x2 grid
+            .height(320.dp)
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF009688), // Teal
-                        Color(0xFF00796B)  // Darker Teal
+                        Color(0xFF1A237E), // Deep Indigo
+                        Color(0xFF303F9F)  // Rich Indigo
                     )
                 )
             )
@@ -140,7 +139,7 @@ fun TopSection(onSignOut: () -> Unit, navController: NavController, name: String
                  IconButton(
                     onClick = onSignOut,
                      modifier = Modifier
-                         .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                         .background(Color.White.copy(alpha = 0.15f), CircleShape)
                          .size(40.dp)
                 ) {
                     Icon(
@@ -154,7 +153,7 @@ fun TopSection(onSignOut: () -> Unit, navController: NavController, name: String
                 IconButton(
                     onClick = { navController.navigate("notifications") },
                     modifier = Modifier
-                        .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                        .background(Color.White.copy(alpha = 0.15f), CircleShape)
                         .size(40.dp)
                 ) {
                     Box {
@@ -167,7 +166,7 @@ fun TopSection(onSignOut: () -> Unit, navController: NavController, name: String
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .size(8.dp)
-                                .background(Color(0xFFEF5350), CircleShape) // Red dot
+                                .background(Color(0xFFFF6B6B), CircleShape) // Soft red dot
                         )
                     }
                 }
@@ -187,56 +186,32 @@ fun TopSection(onSignOut: () -> Unit, navController: NavController, name: String
             Text(
                 text = "Genetic Counselor",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFFB2DFDB),
+                color = Color(0xFFB3B9E6), // Soft lavender
                 fontWeight = FontWeight.Medium
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Stats Grid (2x2)
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Row 1
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    StatCard(
-                        icon = Icons.Outlined.Videocam,
-                        label = "Today's Sessions",
-                        value = "${stats?.todaysSessions ?: 0}",
-                        containerColor = Color.White.copy(alpha = 0.15f),
-                        contentColor = Color.White,
-                        valueColor = Color(0xFFEC407A),
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        icon = Icons.Outlined.Groups,
-                        label = "Total Patients",
-                        value = "${stats?.totalPatients ?: 0}",
-                        containerColor = Color.White.copy(alpha = 0.15f),
-                        contentColor = Color.White,
-                        valueColor = Color(0xFFEC407A),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                // Row 2
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    StatCard(
-                        icon = Icons.Filled.Star,
-                        label = "Avg. Rating",
-                        value = "${stats?.avgRating ?: 0.0}",
-                        containerColor = Color.White.copy(alpha = 0.15f),
-                        contentColor = Color.White,
-                        valueColor = Color(0xFFEC407A),
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        icon = Icons.Outlined.AttachMoney,
-                        label = "This Month",
-                        value = stats?.revenueThisMonth ?: "₹0",
-                        containerColor = Color.White.copy(alpha = 0.15f),
-                        contentColor = Color.White,
-                        valueColor = Color(0xFFEC407A),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            // Stats Row
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                StatCard(
+                    icon = Icons.Outlined.Videocam,
+                    label = "Today's Sessions",
+                    value = "${stats?.todaysSessions ?: 0}",
+                    containerColor = Color.White.copy(alpha = 0.12f),
+                    contentColor = Color.White,
+                    valueColor = Color(0xFFFFD54F), // Warm amber/gold
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    icon = Icons.Outlined.Groups,
+                    label = "Total Patients",
+                    value = "${stats?.totalPatients ?: 0}",
+                    containerColor = Color.White.copy(alpha = 0.12f),
+                    contentColor = Color.White,
+                    valueColor = Color(0xFF4DD0E1), // Bright cyan
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
@@ -249,11 +224,11 @@ fun StatCard(
     value: String,
     containerColor: Color,
     contentColor: Color, 
-    valueColor: Color, // New parameter for value text color
+    valueColor: Color,
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(20.dp), // Slightly more rounded
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier.height(110.dp)
@@ -278,7 +253,7 @@ fun StatCard(
                 text = value,
                 style = MaterialTheme.typography.headlineMedium, 
                 fontWeight = FontWeight.Bold,
-                color = valueColor // Use the specific pink/accent color
+                color = valueColor
             )
         }
     }
@@ -289,7 +264,7 @@ fun StatCard(
 fun TodaysSchedule(
     appointments: List<com.simats.genecare.data.model.AppointmentData>,
     onViewAllClick: () -> Unit, 
-    onStartClick: () -> Unit
+    onStartClick: (Int) -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 24.dp)) {
         Row(
@@ -300,10 +275,11 @@ fun TodaysSchedule(
             Text(
                 text = "Today's Schedule",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A237E) // Deep indigo heading
             )
             TextButton(onClick = onViewAllClick) {
-                Text("View All", color = Color(0xFF00ACC1), fontWeight = FontWeight.Bold)
+                Text("View All", color = Color(0xFF5C6BC0), fontWeight = FontWeight.Bold)
             }
         }
         
@@ -311,7 +287,7 @@ fun TodaysSchedule(
         
         if (appointments.isEmpty()) {
             Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                Text(text = "No appointments today", color = Color.Gray)
+                Text(text = "No appointments today", color = Color(0xFF9E9E9E))
             }
         } else {
             appointments.forEach { appointment ->
@@ -320,8 +296,8 @@ fun TodaysSchedule(
                     detail = "Video Consultation",
                     time = appointment.timeSlot,
                     imageInitial = (appointment.patientName ?: "P").take(1),
-                    imageColor = Color(0xFFFFCC80),
-                    onStartClick = onStartClick
+                    imageColor = Color(0xFFC5CAE9), // Soft indigo background
+                    onStartClick = { onStartClick(appointment.id) }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -351,31 +327,30 @@ fun ScheduleItem(name: String, detail: String, time: String, imageInitial: Strin
                     .background(imageColor),
                 contentAlignment = Alignment.Center
             ) {
-                 // Emoji fallback or Initial
                  Text("👱‍♀️", fontSize = 24.sp)
             }
             
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                Text(detail, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, color = Color(0xFF1A237E))
+                Text(detail, style = MaterialTheme.typography.bodySmall, color = Color(0xFF9E9E9E))
             }
             
             Column(horizontalAlignment = Alignment.End) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.Schedule, contentDescription = null, tint = Color(0xFF00ACC1), modifier = Modifier.size(16.dp))
+                    Icon(Icons.Outlined.Schedule, contentDescription = null, tint = Color(0xFF5C6BC0), modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(time, color = Color(0xFF00ACC1), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    Text(time, color = Color(0xFF5C6BC0), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = onStartClick,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5)),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("Start", fontSize = 12.sp)
+                    Text("Start", fontSize = 12.sp, color = Color.White)
                 }
             }
         }
@@ -383,12 +358,13 @@ fun ScheduleItem(name: String, detail: String, time: String, imageInitial: Strin
 }
 
 @Composable
-fun QuickActionsSection(navController: NavController) {
+fun QuickActionsSection(navController: NavController, pendingCount: Int = 0) {
     Column(modifier = Modifier.padding(horizontal = 24.dp)) {
         Text(
             text = "Quick Actions",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1A237E) // Deep indigo heading
         )
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -396,27 +372,56 @@ fun QuickActionsSection(navController: NavController) {
             QuickActionCard(
                 icon = Icons.Outlined.DateRange, 
                 label = "Session\nRequests", 
-                bgColor = Color(0xFFE3F2FD), 
-                iconColor = Color(0xFF2196F3), 
+                bgColor = Color(0xFFE8EAF6), // Light indigo
+                iconColor = Color(0xFF3F51B5), // Indigo
                 modifier = Modifier.weight(1f),
+                badgeCount = pendingCount,
                 onClick = { navController.navigate("session_requests") }
             )
             QuickActionCard(
                 icon = Icons.Outlined.Groups, 
                 label = "Patient\nList", 
-                bgColor = Color(0xFFE0F2F1), 
-                iconColor = Color(0xFF009688), 
+                bgColor = Color(0xFFE0F7FA), // Light cyan
+                iconColor = Color(0xFF00ACC1), // Cyan
                 modifier = Modifier.weight(1f),
                 onClick = { navController.navigate("patient_list") }
             )
-            QuickActionCard(Icons.Outlined.ChatBubbleOutline, "Messages", Color(0xFFF3E5F5), Color(0xFF9C27B0), Modifier.weight(1f), onClick = { navController.navigate("counselor_messages") })
+            QuickActionCard(
+                icon = Icons.Outlined.ChatBubbleOutline, 
+                label = "Messages", 
+                bgColor = Color(0xFFFCE4EC), // Light pink
+                iconColor = Color(0xFFE91E63), // Pink
+                modifier = Modifier.weight(1f), 
+                onClick = { navController.navigate("counselor_messages") }
+            )
         }
         Spacer(modifier = Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickActionCard(Icons.Outlined.PieChart, "Reports", Color(0xFFE8EAF6), Color(0xFF3F51B5), Modifier.weight(1f), onClick = { navController.navigate("counselor_reports") })
+            QuickActionCard(
+                icon = Icons.Outlined.PieChart, 
+                label = "Reports", 
+                bgColor = Color(0xFFF3E5F5), // Light purple
+                iconColor = Color(0xFF9C27B0), // Purple
+                modifier = Modifier.weight(1f), 
+                onClick = { navController.navigate("counselor_reports") }
+            )
             @Suppress("DEPRECATION")
-            QuickActionCard(Icons.Outlined.TrendingUp, "Performance", Color(0xFFF1F8E9), Color(0xFF4CAF50), Modifier.weight(1f), onClick = { navController.navigate("counselor_performance") })
-            QuickActionCard(Icons.Outlined.Settings, "Settings", Color(0xFFFAFAFA), Color(0xFF757575), Modifier.weight(1f), onClick = { navController.navigate("counselor_settings") })
+            QuickActionCard(
+                icon = Icons.Outlined.TrendingUp, 
+                label = "Performance", 
+                bgColor = Color(0xFFE8F5E9), // Light green
+                iconColor = Color(0xFF43A047), // Green
+                modifier = Modifier.weight(1f), 
+                onClick = { navController.navigate("counselor_performance") }
+            )
+            QuickActionCard(
+                icon = Icons.Outlined.Settings, 
+                label = "Settings", 
+                bgColor = Color(0xFFF5F5F5), // Light grey
+                iconColor = Color(0xFF616161), // Dark grey
+                modifier = Modifier.weight(1f), 
+                onClick = { navController.navigate("counselor_settings") }
+            )
         }
     }
 }
@@ -428,6 +433,7 @@ fun QuickActionCard(
     bgColor: Color, 
     iconColor: Color, 
     modifier: Modifier = Modifier,
+    badgeCount: Int = 0,
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -438,28 +444,50 @@ fun QuickActionCard(
             .height(110.dp)
             .clickable { onClick() }
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(bgColor),
-                contentAlignment = Alignment.Center
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(24.dp))
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(bgColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(24.dp))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF616161), // Darker grey for better readability
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color.Gray,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+
+            if (badgeCount > 0) {
+                Surface(
+                    color = Color(0xFFFF6B6B), // Soft red badge
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(20.dp)
+                        .align(Alignment.TopEnd)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = if (badgeCount > 9) "9+" else badgeCount.toString(),
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -468,7 +496,7 @@ fun QuickActionCard(
 fun WeeklySummaryCard() {
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)), // Light Blue background
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8EAF6)), // Light indigo background
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
@@ -476,9 +504,9 @@ fun WeeklySummaryCard() {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 @Suppress("DEPRECATION")
-                Icon(Icons.Outlined.TrendingUp, contentDescription = null, tint = Color(0xFF1976D2))
+                Icon(Icons.Outlined.TrendingUp, contentDescription = null, tint = Color(0xFF3F51B5))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("This Week Summary", fontWeight = FontWeight.Bold, color = Color(0xFF0D1B2A))
+                Text("This Week Summary", fontWeight = FontWeight.Bold, color = Color(0xFF1A237E))
             }
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -490,8 +518,8 @@ fun WeeklySummaryCard() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Revenue", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
-                Text("₹18,400", fontWeight = FontWeight.Bold, color = Color(0xFF00C853)) // Green for money
+                Text("Revenue", color = Color(0xFF7986CB), style = MaterialTheme.typography.bodyMedium)
+                Text("₹18,400", fontWeight = FontWeight.Bold, color = Color(0xFF43A047)) // Green for money
             }
             Spacer(modifier = Modifier.height(8.dp))
             SummaryRow("Avg. Session Time", "52 min")
@@ -505,8 +533,8 @@ fun SummaryRow(label: String, value: String) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
-        Text(value, fontWeight = FontWeight.Bold, color = Color(0xFF0D1B2A))
+        Text(label, color = Color(0xFF7986CB), style = MaterialTheme.typography.bodyMedium)
+        Text(value, fontWeight = FontWeight.Bold, color = Color(0xFF1A237E))
     }
 }
 
@@ -516,12 +544,12 @@ fun RecentReviewsSection(reviews: List<com.simats.genecare.data.model.ReviewData
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFB300))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Recent Reviews", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("Recent Reviews", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1A237E))
         }
         Spacer(modifier = Modifier.height(16.dp))
         
         if (reviews.isEmpty()) {
-            Text("No reviews yet.", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+            Text("No reviews yet.", color = Color(0xFF9E9E9E), style = MaterialTheme.typography.bodyMedium)
         } else {
             reviews.forEach { review ->
                 ReviewCard(
@@ -554,12 +582,12 @@ fun ReviewCard(rating: Int, daysAgo: String, review: String, author: String) {
                         Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(16.dp))
                     }
                 }
-                Text(daysAgo, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(daysAgo, style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(review, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            Text(review, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF757575))
             Spacer(modifier = Modifier.height(4.dp))
-            Text(author, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            Text(author, style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E))
         }
     }
 }

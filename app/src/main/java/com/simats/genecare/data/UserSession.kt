@@ -25,6 +25,14 @@ object UserSession {
         _currentUser.value = null
     }
 
+    fun updateVerificationStatus(status: String) {
+        _currentUser.value?.let { user ->
+            val updatedUser = user.copy(verificationStatus = status)
+            sessionManager?.saveUserSession(updatedUser)
+            _currentUser.value = updatedUser
+        }
+    }
+
     fun getUserId(): Int? {
         return _currentUser.value?.id
     }

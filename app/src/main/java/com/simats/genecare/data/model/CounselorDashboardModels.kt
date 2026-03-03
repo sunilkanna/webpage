@@ -4,11 +4,12 @@ import com.google.gson.annotations.SerializedName
 
 data class GetCounselorAppointmentsResponse(
     @SerializedName("status") val status: String,
+    @SerializedName("message") val message: String? = null,
     @SerializedName("appointments") val appointments: List<CounselorAppointmentData>
 )
 
 data class CounselorAppointmentData(
-    @SerializedName("id") val id: String,
+    @SerializedName("id") val id: Int,
     @SerializedName("appointment_date") val date: String,
     @SerializedName("time_slot") val time: String,
     @SerializedName("status") val status: String,
@@ -17,13 +18,15 @@ data class CounselorAppointmentData(
     @SerializedName("reason") val reason: String?,
     @SerializedName("image_initial") val imageInitial: String?,
     @SerializedName("image_color_hex") val imageColorHex: String?,
-    @SerializedName("has_report") val hasReport: Boolean?
+    @SerializedName("has_report") val hasReport: Boolean?,
+    @SerializedName("report_url") val reportUrl: String?
 )
 
 
 
 data class GetCounselorPatientsResponse(
     @SerializedName("status") val status: String,
+    @SerializedName("message") val message: String? = null,
     @SerializedName("patients") val patients: List<CounselorPatientData>
 )
 

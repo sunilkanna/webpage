@@ -1,6 +1,7 @@
 package com.simats.genecare.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -41,7 +42,7 @@ fun CounselorSettingsScreen(navController: NavController) {
                 ),
                 modifier = Modifier.background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF009688), Color(0xFF00796B))
+                        colors = listOf(Color(0xFF1A237E), Color(0xFF303F9F))
                     )
                 )
             )
@@ -82,7 +83,7 @@ fun CounselorSettingsScreen(navController: NavController) {
                 title = "Edit Profile",
                 subtitle = "Update your bio and qualifications",
                 icon = Icons.Default.Person,
-                onClick = { /* Navigate to profile edit */ }
+                onClick = { navController.navigate("counselor_edit_profile") }
             )
         }
     }
@@ -98,7 +99,8 @@ fun SettingItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(vertical = 12.dp)
+            .clickable { onClick() },
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
     ) {
         Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))

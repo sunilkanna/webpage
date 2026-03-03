@@ -22,7 +22,7 @@ if ($result->num_rows > 0) {
                 "id" => $row['id'],
                 "full_name" => $row['full_name'],
                 "user_type" => $row['user_type'],
-                "verificationStatus" => $row['verification_status'] // Return status to app
+                "verification_status" => $row['verification_status'] // Return status to app
             ]
         ]);
     } else {

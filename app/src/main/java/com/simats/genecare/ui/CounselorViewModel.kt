@@ -111,6 +111,9 @@ class CounselorViewModel : ViewModel() {
                              rejectionReason = profile.rejectionReason,
                              certificateUrl = ""
                          )
+                         if (profile.status == "Approved") {
+                             com.simats.genecare.data.UserSession.updateVerificationStatus("Approved")
+                         }
                      }
                  }
              } catch (e: Exception) {
@@ -262,11 +265,21 @@ class CounselorViewModel : ViewModel() {
         val reason: String,
         val imageInitial: String?,
         val imageColor: Color,
-        val hasReport: Boolean
+        val hasReport: Boolean,
+        val reportUrl: String? = null
     )
 
     private val _sessionRequests = MutableStateFlow<List<SessionRequest>>(emptyList())
     val sessionRequests: StateFlow<List<SessionRequest>> = _sessionRequests.asStateFlow()
+
+    private val _actionLoadingStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val actionLoadingStates: StateFlow<Map<String, Boolean>> = _actionLoadingStates.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     init {
         // Observe UserSession changes to automatically fetch data for the correct user
@@ -279,25 +292,32 @@ class CounselorViewModel : ViewModel() {
                 }
             }
         }
-        fetchAllCounselors()
+    }
+
+    fun refresh() {
+        fetchCounselorAppointments()
+        fetchCurrentCounselorProfile()
     }
 
 
 
     fun fetchCounselorAppointments() {
-        val currentId = _currentCounselorId.value.toIntOrNull() ?: 1
+        val currentId = com.simats.genecare.data.UserSession.getUserId() ?: 1
         viewModelScope.launch {
+            _isRefreshing.value = true
+            _error.value = null
             try {
-                // ... rest of function
-
                 val response = authRepository.getCounselorAppointments(currentId)
                 if (response.isSuccessful && response.body()?.status == "success") {
                     val appointments = response.body()?.appointments ?: emptyList()
-                    val filtered = appointments.filter { it.status.equals("Pending", ignoreCase = true) }
+                    // More robust filtering: handles null or empty as "Pending" for legacy data
+                    val filtered = appointments.filter { 
+                        it.status.isNullOrBlank() || it.status.equals("Pending", ignoreCase = true) 
+                    }
                     
                     _sessionRequests.value = filtered.map {
                         SessionRequest(
-                            id = it.id,
+                            id = it.id.toString(),
                             name = it.patientName ?: "Unknown Patient",
                             type = it.type ?: "Consultation",
                             date = it.date,
@@ -305,40 +325,53 @@ class CounselorViewModel : ViewModel() {
                             reason = it.reason ?: "Routine Checkup",
                             imageInitial = it.imageInitial ?: "?",
                             imageColor = try { Color(android.graphics.Color.parseColor(it.imageColorHex ?: "#FFCC80")) } catch(e:Exception) { Color(0xFFFFCC80) },
-                            hasReport = it.hasReport ?: false
+                            hasReport = it.hasReport ?: false,
+                            reportUrl = it.reportUrl
                         )
                     }
+                } else {
+                    val errorMsg = response.body()?.message 
+                        ?: response.errorBody()?.string()?.takeIf { it.isNotBlank() }
+                        ?: "Failed to fetch session requests"
+                    _error.value = errorMsg
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                _error.value = "Network error: ${e.message}"
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }
 
     fun acceptSession(requestId: String) {
         viewModelScope.launch {
+            _actionLoadingStates.value = _actionLoadingStates.value + (requestId to true)
             try {
                 val response = authRepository.updateAppointmentStatus(requestId, "Confirmed")
                 if (response.isSuccessful && response.body()?.status == "success") {
-                    // Refresh functionality
                     fetchCounselorAppointments()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                _actionLoadingStates.value = _actionLoadingStates.value - requestId
             }
         }
     }
 
     fun rejectSession(requestId: String) {
         viewModelScope.launch {
+            _actionLoadingStates.value = _actionLoadingStates.value + (requestId to true)
             try {
                 val response = authRepository.updateAppointmentStatus(requestId, "Cancelled")
                 if (response.isSuccessful && response.body()?.status == "success") {
-                    // Refresh functionality
                     fetchCounselorAppointments()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                _actionLoadingStates.value = _actionLoadingStates.value - requestId
             }
         }
     }

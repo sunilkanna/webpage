@@ -1,5 +1,6 @@
 package com.simats.genecare.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -69,6 +71,15 @@ fun WelcomeScreen(navController: NavController) {
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = "Arrow Forward"
             )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedButton(
+            onClick = { navController.navigate("sign_in") },
+            shape = RoundedCornerShape(50),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            border = BorderStroke(1.dp, Color(0xFF008080))
+        ) {
+            Text(text = "Sign In", color = Color(0xFF008080))
         }
         Spacer(modifier = Modifier.height(32.dp))
     }

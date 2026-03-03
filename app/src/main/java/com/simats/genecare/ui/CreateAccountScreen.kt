@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,11 +38,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.simats.genecare.ui.theme.GenecareTheme
 import androidx.compose.runtime.collectAsState
@@ -57,6 +61,15 @@ fun CreateAccountScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf(false) }
+    var passwordTouched by remember { mutableStateOf(false) }
+
+    // Password strength checks
+    val hasMinLength = password.length >= 8
+    val hasUpperCase = password.any { it.isUpperCase() }
+    val hasLowerCase = password.any { it.isLowerCase() }
+    val hasDigit = password.any { it.isDigit() }
+    val hasSpecialChar = password.any { !it.isLetterOrDigit() }
+    val isPasswordStrong = hasMinLength && hasUpperCase && hasLowerCase && hasDigit && hasSpecialChar
     var userType by remember { mutableStateOf("Patient") }
 
     val registrationState by viewModel.registrationState.collectAsState()
@@ -104,6 +117,7 @@ fun CreateAccountScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Text("Create Account", style = MaterialTheme.typography.headlineLarge)
             Text("Join GeneCare to start your personalized health journey")
@@ -132,7 +146,7 @@ fun CreateAccountScreen(
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = it; passwordTouched = true },
                 label = { Text("Password") },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 trailingIcon = {
@@ -147,10 +161,24 @@ fun CreateAccountScreen(
                         Icon(imageVector = image, description)
                     }
                 },
+                isError = passwordTouched && !isPasswordStrong && password.isNotEmpty(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth()
             )
+            // Password strength requirements
+            if (passwordTouched && password.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Column(modifier = Modifier.fillMaxWidth().padding(start = 8.dp)) {
+                    Text("Password must have:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    PasswordRule("At least 8 characters", hasMinLength)
+                    PasswordRule("An uppercase letter (A-Z)", hasUpperCase)
+                    PasswordRule("A lowercase letter (a-z)", hasLowerCase)
+                    PasswordRule("A digit (0-9)", hasDigit)
+                    PasswordRule("A special character (!@#\$%^&*)", hasSpecialChar)
+                }
+            }
             Spacer(modifier = Modifier.height(32.dp))
             Text("I am a:")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -177,25 +205,20 @@ fun CreateAccountScreen(
                 Button(
                     onClick = {
                         val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-                        if (!isEmailValid) {
-                             emailError = true
-                             android.widget.Toast.makeText(context, "Please enter a valid email", android.widget.Toast.LENGTH_SHORT).show()
-                        } else if (fullName.isNotBlank() && email.isNotBlank() && password.isNotBlank()) {
-                            // Trigger registration
-                            // Note: For Counselor, we might want to register AFTER qualification, 
-                            // but for simplicity we verify usage here.
-                            // The backend supports 'Patient' hardcoded in php, let's fix that in next step or assume Patient for now.
-                            // Actually the php has $user_type = 'Patient'; hardcoded in register_patient.php
-                            // We should probably update the PHP if we want to support Counselor, 
-                            // but for this task "backend data... for the patient alone", so I will strictly follow that.
+                        if (fullName.isBlank() || email.isBlank() || password.isBlank()) {
+                            android.widget.Toast.makeText(context, "Please fill all fields", android.widget.Toast.LENGTH_SHORT).show()
+                        } else if (!isEmailValid) {
+                            emailError = true
+                            android.widget.Toast.makeText(context, "Please enter a valid email", android.widget.Toast.LENGTH_SHORT).show()
+                        } else if (!isPasswordStrong) {
+                            passwordTouched = true
+                            android.widget.Toast.makeText(context, "Please create a stronger password", android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
                             if (userType == "Patient") {
                                 viewModel.register(fullName, email, password, "Patient")
                             } else {
-                                // For counselor, register first then navigate
                                 viewModel.register(fullName, email, password, "Counselor")
                             }
-                        } else {
-                            android.widget.Toast.makeText(context, "Please fill all fields", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -212,6 +235,26 @@ fun CreateAccountScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PasswordRule(text: String, isMet: Boolean) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 1.dp)
+    ) {
+        Text(
+            text = if (isMet) "✓" else "✗",
+            color = if (isMet) Color(0xFF4CAF50) else Color(0xFFE53935),
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp
+        )
+        Text(
+            text = "  $text",
+            color = if (isMet) Color(0xFF4CAF50) else Color.Gray,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 

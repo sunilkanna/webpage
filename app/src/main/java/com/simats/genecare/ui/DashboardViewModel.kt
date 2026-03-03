@@ -48,7 +48,12 @@ class DashboardViewModel(private val repository: DashboardRepository = Dashboard
                     _uiState.value = DashboardState.Error(response.body()?.message ?: "Error fetching dashboard data")
                 }
             } catch (e: Exception) {
-                _uiState.value = DashboardState.Error(e.message ?: "Network error")
+                val errorMessage = when (e) {
+                    is java.net.SocketTimeoutException -> "Network timeout: Server is taking too long to respond. Please check your connection."
+                    is java.net.ConnectException -> "Connection error: Could not connect to the server. Please verify your IP address and server status."
+                    else -> e.message ?: "Network error occurred"
+                }
+                _uiState.value = DashboardState.Error(errorMessage)
             }
         }
     }

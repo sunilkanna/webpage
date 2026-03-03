@@ -57,6 +57,10 @@ fun CounselorVerificationScreen(navController: NavController, viewModel: Counsel
     val counselors by viewModel.counselors.collectAsState()
     var selectedFilter by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
+    
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.fetchAllCounselors()
+    }
 
     Scaffold(
         topBar = {

@@ -24,13 +24,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.simats.genecare.ui.theme.GenecareTheme
+import com.simats.genecare.data.UserSession
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController) {
     LaunchedEffect(key1 = true) {
         delay(3000L) // 3-second delay
-        navController.navigate("welcome") {
+        
+        val nextDestination = if (UserSession.isLoggedIn()) {
+            when (UserSession.getUserType()) {
+                "Patient" -> "dashboard"
+                "Doctor/Counselor", "Counselor" -> {
+                    // Route to dashboard if approved, else pending
+                    val user = UserSession.getUser()
+                    if (user?.verificationStatus == "Approved") "counselor_dashboard"
+                    else "counselor_pending_dashboard"
+                }
+                "Admin" -> "admin_dashboard"
+                else -> "dashboard"
+            }
+        } else {
+            "welcome"
+        }
+
+        navController.navigate(nextDestination) {
             popUpTo("splash") { inclusive = true }
         }
     }

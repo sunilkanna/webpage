@@ -114,7 +114,15 @@ fun SignInScreen(
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { 
+                        if (navController.previousBackStackEntry != null) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate("welcome") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },

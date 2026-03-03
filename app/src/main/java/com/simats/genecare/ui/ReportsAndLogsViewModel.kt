@@ -37,6 +37,7 @@ data class ReportsAndLogsState(
 )
 
 class ReportsAndLogsViewModel : ViewModel() {
+    private val repository = com.simats.genecare.data.repository.AuthRepository()
 
     private val _uiState = MutableStateFlow(ReportsAndLogsState())
     val uiState: StateFlow<ReportsAndLogsState> = _uiState.asStateFlow()
@@ -45,13 +46,15 @@ class ReportsAndLogsViewModel : ViewModel() {
         loadData()
     }
 
-    private fun loadData() {
+    fun loadData() {
+        val user = com.simats.genecare.data.UserSession.getUser() ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
+                // Fetch Logs
                 val logsResponse = ApiClient.api.getSystemLogs()
-                if (logsResponse.isSuccessful && logsResponse.body() != null) {
-                    val logs = logsResponse.body()!!.logs.map {
+                val logs = if (logsResponse.isSuccessful && logsResponse.body() != null) {
+                    logsResponse.body()!!.logs.map {
                         LogEntry(
                             id = it.id,
                             timestamp = it.timestamp,
@@ -60,23 +63,64 @@ class ReportsAndLogsViewModel : ViewModel() {
                             source = it.source
                         )
                     }
-                    
-                    // Reports are still hardcoded for now or we could add a script for it
-                    val reports = listOf(
-                        ReportItem("Monthly Patient Growth", "Feb 01, 2026", "PDF", "1.2 MB"),
-                        ReportItem("Q1 Financial Summary", "Jan 15, 2026", "XLSX", "850 KB"),
-                        ReportItem("System Health Audit", "Feb 05, 2026", "PDF", "2.4 MB")
-                    )
+                } else emptyList()
 
-                    _uiState.value = _uiState.value.copy(
-                        logs = logs,
-                        reports = reports,
-                        isLoading = false
-                    )
-                }
+                // Fetch Real Reports
+                val reportsResponse = ApiClient.api.getPatientResults(user.id)
+                val reports = if (reportsResponse.isSuccessful && reportsResponse.body()?.status == "success") {
+                    reportsResponse.body()?.reports?.map {
+                        ReportItem(
+                            title = it.title,
+                            date = it.date,
+                            type = "PDF", // Defaulting for display
+                            size = "N/A"
+                        )
+                    } ?: emptyList()
+                } else emptyList()
+
+                _uiState.value = _uiState.value.copy(
+                    logs = logs,
+                    reports = reports,
+                    isLoading = false
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
             }
+        }
+    }
+
+    fun uploadReport(uri: android.net.Uri, context: android.content.Context) {
+        val userId = com.simats.genecare.data.UserSession.getUserId() ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            try {
+                val file = getFileFromUri(context, uri)
+                if (file != null) {
+                    val response = repository.uploadReport(userId, file)
+                    if (response.isSuccessful && response.body()?.status == "success") {
+                        loadData() // Refresh list
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    private fun getFileFromUri(context: android.content.Context, uri: android.net.Uri): java.io.File? {
+        val contentResolver = context.contentResolver
+        val tempFile = java.io.File(context.cacheDir, "temp_report_${System.currentTimeMillis()}")
+        return try {
+            contentResolver.openInputStream(uri)?.use { input ->
+                java.io.FileOutputStream(tempFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            tempFile
+        } catch (e: Exception) {
+            null
         }
     }
     

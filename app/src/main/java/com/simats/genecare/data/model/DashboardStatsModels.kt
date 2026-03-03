@@ -24,6 +24,7 @@ data class PatientDashboardStats(
 data class CounselorDashboardStats(
     @SerializedName("todays_sessions") val todaysSessions: Int,
     @SerializedName("total_patients") val totalPatients: Int,
+    @SerializedName("pending_requests_count") val pendingRequestsCount: Int? = 0,
     @SerializedName("avg_rating") val avgRating: Double,
 
     @SerializedName("revenue_this_month") val revenueThisMonth: String,
@@ -47,5 +48,18 @@ data class AppointmentData(
     @SerializedName("time_slot") val timeSlot: String,
     @SerializedName("status") val status: String,
     @SerializedName("patient_name") val patientName: String?,
+    @SerializedName("counselor_name") val counselorName: String?
+)
+
+data class GetPatientAppointmentsResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("appointments") val appointments: List<PatientAppointmentItem>
+)
+
+data class PatientAppointmentItem(
+    @SerializedName("id") val id: Int,
+    @SerializedName("appointment_date") val appointmentDate: String,
+    @SerializedName("time_slot") val timeSlot: String,
+    @SerializedName("status") val status: String,
     @SerializedName("counselor_name") val counselorName: String?
 )

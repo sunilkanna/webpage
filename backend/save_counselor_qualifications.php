@@ -15,8 +15,21 @@ if (empty($user_id) || empty($registration_number) || empty($medical_council)) {
     exit();
 }
 
-$stmt = $conn->prepare("INSERT INTO counselor_qualifications (user_id, registration_number, medical_council, registration_year, certificate_url) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("issss", $user_id, $registration_number, $medical_council, $registration_year, $certificate_url);
+// Check if a 'Pending' qualification already exists for this user
+$check_stmt = $conn->prepare("SELECT id FROM counselor_qualifications WHERE user_id = ? AND status = 'Pending'");
+$check_stmt->bind_param("i", $user_id);
+$check_stmt->execute();
+$check_result = $check_stmt->get_result();
+
+if ($check_result->num_rows > 0) {
+    // Update existing pending entry
+    $stmt = $conn->prepare("UPDATE counselor_qualifications SET registration_number = ?, medical_council = ?, registration_year = ?, certificate_url = ? WHERE user_id = ? AND status = 'Pending'");
+    $stmt->bind_param("ssssi", $registration_number, $medical_council, $registration_year, $certificate_url, $user_id);
+} else {
+    // Insert new pending entry
+    $stmt = $conn->prepare("INSERT INTO counselor_qualifications (user_id, registration_number, medical_council, registration_year, certificate_url) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("issss", $user_id, $registration_number, $medical_council, $registration_year, $certificate_url);
+}
 
 if ($stmt->execute()) {
     echo json_encode(["status" => "success", "message" => "Qualification submitted for verification"]);

@@ -35,6 +35,9 @@ import androidx.compose.material3.rememberDatePickerState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Calendar
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 import android.widget.Toast
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -72,7 +75,13 @@ fun ProfileSetupScreen(
     val genderOptions = listOf("Male", "Female", "Other")
 
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState(
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                return utcTimeMillis <= System.currentTimeMillis()
+            }
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -261,11 +270,16 @@ fun ProfileSetupScreen(
             // Phone Number
             OutlinedTextField(
                 value = phoneNumber,
-                onValueChange = { phoneNumber = it },
+                onValueChange = { 
+                    if (it.length <= 10 && it.all { char -> char.isDigit() }) {
+                        phoneNumber = it 
+                    }
+                },
                 label = { Text("Phone Number") },
                 placeholder = { Text("+1 (555) 123-4567") },
                 leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF00ACC1),
@@ -295,10 +309,15 @@ fun ProfileSetupScreen(
             // Save Button
             Button(
                 onClick = { 
-                    if (fullName.isNotBlank() && dateOfBirth.isNotBlank() && phoneNumber.isNotBlank()) {
-                        viewModel.updateProfile(fullName, dateOfBirth, selectedGender, phoneNumber, address)
+                    val cleanedPhone = phoneNumber.filter { it.isDigit() }
+                    if (fullName.isBlank()) {
+                        Toast.makeText(context, "Full Name is required", Toast.LENGTH_SHORT).show()
+                    } else if (dateOfBirth.isBlank()) {
+                        Toast.makeText(context, "Date of Birth is required", Toast.LENGTH_SHORT).show()
+                    } else if (cleanedPhone.length != 10) {
+                        Toast.makeText(context, "Please enter a valid 10-digit phone number", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(context, "Please fill in all required fields", Toast.LENGTH_SHORT).show()
+                        viewModel.updateProfile(fullName, dateOfBirth, selectedGender, cleanedPhone, address)
                     }
                 },
                 modifier = Modifier

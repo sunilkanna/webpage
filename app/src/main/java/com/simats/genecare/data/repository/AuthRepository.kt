@@ -93,6 +93,10 @@ class AuthRepository {
         return api.updatePaymentStatus(com.simats.genecare.data.model.UpdatePaymentStatusRequest(paymentId, status, transactionId))
     }
 
+    suspend fun verifyPaymentSignature(paymentId: Int, razorpayOrderId: String, razorpayPaymentId: String, razorpaySignature: String): Response<com.simats.genecare.data.model.GenericResponse> {
+        return api.verifyPaymentSignature(com.simats.genecare.data.model.VerifyPaymentSignatureRequest(paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature))
+    }
+
     suspend fun getCounselorAnalytics(counselorId: Int): Response<com.simats.genecare.data.model.CounselorAnalyticsResponse> {
         return api.getCounselorAnalytics(counselorId)
     }
@@ -107,5 +111,9 @@ class AuthRepository {
         val body = okhttp3.MultipartBody.Part.createFormData("file", file.name, requestFile)
         val patientIdPart = patientId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
         return api.uploadReport(patientIdPart, body)
+    }
+
+    suspend fun submitFeedback(appointmentId: Int, patientId: Int, rating: Int, comments: String): Response<GenericResponse> {
+        return api.submitFeedback(com.simats.genecare.data.model.FeedbackRequest(appointmentId, patientId, rating, comments))
     }
 }

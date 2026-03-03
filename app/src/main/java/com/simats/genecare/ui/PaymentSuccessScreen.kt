@@ -16,12 +16,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.simats.genecare.ui.theme.GenecareTheme
 
 @Composable
-fun PaymentSuccessScreen(navController: NavController) {
+fun PaymentSuccessScreen(navController: NavController, appointmentId: Int = 1) {
+    val viewModel: SessionBillViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val appointmentDetails by viewModel.appointmentDetails.collectAsState()
+    val billDetails by viewModel.billDetails.collectAsState()
+
+    androidx.compose.runtime.LaunchedEffect(appointmentId) {
+        viewModel.loadBill(appointmentId)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,8 +64,8 @@ fun PaymentSuccessScreen(navController: NavController) {
             color = Color(0xFF37474F)
         )
         
-        androidx.compose.material3.Text(
-            text = "Your consultation fee has been paid successfully.",
+        Text(
+            text = "Your consultation with ${appointmentDetails?.counselorName ?: "your counselor"} has been paid successfully.",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray,
             textAlign = TextAlign.Center,
@@ -72,8 +82,8 @@ fun PaymentSuccessScreen(navController: NavController) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Payment ID", color = Color.Gray, fontSize = 14.sp)
-                    Text("PAY_123456789", fontWeight = FontWeight.Medium, color = Color(0xFF37474F), fontSize = 14.sp)
+                    Text("Session Date", color = Color.Gray, fontSize = 14.sp)
+                    Text(appointmentDetails?.appointmentDate ?: "N/A", fontWeight = FontWeight.Medium, color = Color(0xFF37474F), fontSize = 14.sp)
                 }
                  Spacer(modifier = Modifier.height(12.dp))
                  Row(
@@ -81,7 +91,7 @@ fun PaymentSuccessScreen(navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Amount Paid", color = Color.Gray, fontSize = 14.sp)
-                    Text("₹1,475", fontWeight = FontWeight.Bold, color = Color(0xFF37474F), fontSize = 14.sp)
+                    Text("₹${String.format("%.2f", billDetails?.totalAmount ?: 0.0)}", fontWeight = FontWeight.Bold, color = Color(0xFF37474F), fontSize = 14.sp)
                 }
             }
         }
@@ -90,7 +100,7 @@ fun PaymentSuccessScreen(navController: NavController) {
 
         Button(
             onClick = {
-                  navController.navigate("session_feedback") 
+                  navController.navigate("session_feedback/$appointmentId") 
             },
             modifier = Modifier
                 .fillMaxWidth()

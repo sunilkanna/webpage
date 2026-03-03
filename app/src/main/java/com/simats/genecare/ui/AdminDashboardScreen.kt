@@ -69,7 +69,7 @@ fun AdminDashboardScreen(
                 .padding(innerPadding)
         ) {
             item { AdminDashboardHeader(navController, onLogout = onLogout, stats = adminStats) }
-            item { QuickActions(navController) }
+            item { QuickActions(navController, stats = adminStats) }
             item { RecentActivity() }
             item { PlatformHealth(stats = adminStats) }
         }
@@ -175,7 +175,7 @@ fun DashboardStatCard(title: String, value: String, icon: ImageVector, onClick: 
 }
 
 @Composable
-fun QuickActions(navController: NavController) {
+fun QuickActions(navController: NavController, stats: com.simats.genecare.data.model.AdminStatsResponse?) {
     Column(modifier = Modifier.padding(16.dp)) {
         Text(text = "Quick Actions", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
@@ -185,7 +185,7 @@ fun QuickActions(navController: NavController) {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { QuickActionCard("Verify Counsel", "89 pending", Icons.Default.CheckCircleOutline, onClick = { navController.navigate("counselor_verification") }) }
+            item { QuickActionCard("Verify Counsel", "${stats?.pendingVerifications ?: 0} pending", Icons.Default.CheckCircleOutline, onClick = { navController.navigate("counselor_verification") }) }
             item { QuickActionCard("Analytics", "Platform metrics", Icons.Default.BarChart, onClick = { navController.navigate("analytics") }) }
             item { QuickActionCard("User Management", "Manage users", Icons.Default.Group, onClick = { navController.navigate("user_management") }) }
             item { QuickActionCard("Reports & Logs", "Access system reports", Icons.Default.Report, onClick = { navController.navigate("reports_and_logs") }) }

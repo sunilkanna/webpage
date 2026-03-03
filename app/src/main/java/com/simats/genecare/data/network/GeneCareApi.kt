@@ -64,7 +64,7 @@ interface GeneCareApi {
         @Body request: DashboardStatsRequest
     ): Response<DashboardStatsResponse>
 
-    @POST("get_counselors.php") // Assuming we might want to fetch this later
+    @GET("get_counselors.php")
     suspend fun getCounselors(): Response<CounselorResponse>
 
     @POST("send_message.php")
@@ -72,11 +72,7 @@ interface GeneCareApi {
         @Body request: SendMessageRequest
     ): Response<SendMessageResponse>
 
-    @POST("get_messages.php") // Note: get_messages.php uses GET in my PHP script usually, let's check. 
-    // Ah, I wrote get_messages.php to use $_GET. So it should be @GET.
-    // wait, I wrote: $user_id = $_GET['user_id'];
-    // So yes, @GET.
-    // But Retrofit @GET queries are usually @Query params.
+    @GET("get_messages.php")
     suspend fun getMessages(
         @retrofit2.http.Query("user_id") userId: Int,
         @retrofit2.http.Query("other_user_id") otherUserId: Int
@@ -172,6 +168,11 @@ interface GeneCareApi {
         @retrofit2.http.Query("appointment_id") appointmentId: Int
     ): Response<com.simats.genecare.data.model.GetAppointmentDetailsResponse>
 
+    @GET("get_appointments.php")
+    suspend fun getPatientAppointments(
+        @retrofit2.http.Query("patient_id") patientId: Int
+    ): Response<com.simats.genecare.data.model.GetPatientAppointmentsResponse>
+
     @POST("complete_appointment.php")
     suspend fun completeAppointment(
         @Body request: com.simats.genecare.data.model.CompleteAppointmentRequest
@@ -186,6 +187,11 @@ interface GeneCareApi {
     @POST("update_payment_status.php")
     suspend fun updatePaymentStatus(
         @Body request: com.simats.genecare.data.model.UpdatePaymentStatusRequest
+    ): Response<com.simats.genecare.data.model.GenericResponse>
+
+    @POST("verify_payment_signature.php")
+    suspend fun verifyPaymentSignature(
+        @Body request: com.simats.genecare.data.model.VerifyPaymentSignatureRequest
     ): Response<com.simats.genecare.data.model.GenericResponse>
 
     // Analytics
@@ -216,4 +222,51 @@ interface GeneCareApi {
     suspend fun getCounselorReports(
         @retrofit2.http.Query("counselor_id") counselorId: Int
     ): Response<com.simats.genecare.data.model.GetCounselorReportsResponse>
+
+    // Forgot Password endpoints
+    @POST("send_otp.php")
+    suspend fun sendOtp(
+        @Body request: com.simats.genecare.data.model.SendOtpRequest
+    ): Response<com.simats.genecare.data.model.SendOtpResponse>
+
+    @POST("verify_otp.php")
+    suspend fun verifyOtp(
+        @Body request: com.simats.genecare.data.model.VerifyOtpRequest
+    ): Response<com.simats.genecare.data.model.VerifyOtpResponse>
+
+    @POST("reset_password.php")
+    suspend fun resetPassword(
+        @Body request: com.simats.genecare.data.model.ResetPasswordRequest
+    ): Response<com.simats.genecare.data.model.ResetPasswordResponse>
+
+    // Video Session Management
+    @POST("start_session.php")
+    suspend fun startSession(
+        @Body request: com.simats.genecare.data.model.StartSessionRequest
+    ): Response<com.simats.genecare.data.model.StartSessionResponse>
+
+    @POST("end_session.php")
+    suspend fun endSession(
+        @Body request: com.simats.genecare.data.model.EndSessionRequest
+    ): Response<com.simats.genecare.data.model.EndSessionResponse>
+
+    @GET("check_session_ready.php")
+    suspend fun checkSessionReady(
+        @retrofit2.http.Query("appointment_id") appointmentId: Int
+    ): Response<com.simats.genecare.data.model.CheckSessionReadyResponse>
+
+    @POST("submit_feedback.php")
+    suspend fun submitFeedback(
+        @Body request: com.simats.genecare.data.model.FeedbackRequest
+    ): Response<GenericResponse>
+
+    @GET("get_notifications.php")
+    suspend fun getNotifications(
+        @retrofit2.http.Query("user_id") userId: Int
+    ): Response<com.simats.genecare.data.model.NotificationResponse>
+
+    @POST("mark_notification_read.php")
+    suspend fun markNotificationRead(
+        @Body request: com.simats.genecare.data.model.MarkReadRequest
+    ): Response<GenericResponse>
 }

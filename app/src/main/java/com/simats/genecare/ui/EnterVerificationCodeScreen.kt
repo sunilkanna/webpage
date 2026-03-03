@@ -31,17 +31,56 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EnterVerificationCodeScreen(navController: NavController, email: String) {
+fun EnterVerificationCodeScreen(
+    navController: NavController,
+    email: String,
+    viewModel: ForgotPasswordViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     var code by remember { mutableStateOf(List(5) { "" }) }
-    var countdown by remember { mutableStateOf(52) }
+    var countdown by remember { mutableStateOf(60) }
     val focusRequesters = remember { List(5) { FocusRequester() } }
     val focusManager = LocalFocusManager.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val verifyOtpState by viewModel.verifyOtpState.collectAsState()
+    val sendOtpState by viewModel.sendOtpState.collectAsState()
 
     LaunchedEffect(Unit) {
         focusRequesters[0].requestFocus()
         while (countdown > 0) {
             delay(1000)
             countdown--
+        }
+    }
+
+    LaunchedEffect(verifyOtpState) {
+        when (verifyOtpState) {
+            is OtpState.Success -> {
+                android.widget.Toast.makeText(context, (verifyOtpState as OtpState.Success).message, android.widget.Toast.LENGTH_SHORT).show()
+                navController.navigate("create_new_password/$email")
+                viewModel.resetVerifyOtpState()
+            }
+            is OtpState.Error -> {
+                android.widget.Toast.makeText(context, (verifyOtpState as OtpState.Error).message, android.widget.Toast.LENGTH_LONG).show()
+                viewModel.resetVerifyOtpState()
+            }
+            else -> {}
+        }
+    }
+
+    // Handle resend OTP success
+    LaunchedEffect(sendOtpState) {
+        when (sendOtpState) {
+            is OtpState.Success -> {
+                android.widget.Toast.makeText(context, "New code sent!", android.widget.Toast.LENGTH_SHORT).show()
+                countdown = 60
+                viewModel.resetSendOtpState()
+            }
+            is OtpState.Error -> {
+                android.widget.Toast.makeText(context, (sendOtpState as OtpState.Error).message, android.widget.Toast.LENGTH_LONG).show()
+                viewModel.resetSendOtpState()
+            }
+            else -> {}
         }
     }
 
@@ -140,27 +179,42 @@ fun EnterVerificationCodeScreen(navController: NavController, email: String) {
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Demo Mode: Use code 12345 to verify", fontSize = 14.sp)
+
+            // Resend code
+            if (countdown > 0) {
+                Text("Resend code in ${countdown}s", color = MaterialTheme.colorScheme.primary)
+            } else {
+                TextButton(
+                    onClick = {
+                        viewModel.sendOtp(email)
+                    },
+                    enabled = sendOtpState !is OtpState.Loading
+                ) {
+                    Text("Resend Code", fontWeight = FontWeight.Bold)
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Resend code in ${countdown}s", color = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { navController.navigate("create_new_password/$email") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = code.joinToString("").length == 5
-            ) {
-                Text("Verify Code", fontSize = 16.sp)
+
+            if (verifyOtpState is OtpState.Loading) {
+                CircularProgressIndicator()
+            } else {
+                Button(
+                    onClick = {
+                        val enteredOtp = code.joinToString("")
+                        if (enteredOtp.length == 5) {
+                            viewModel.verifyOtp(email, enteredOtp)
+                        } else {
+                            android.widget.Toast.makeText(context, "Please enter all 5 digits", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = code.joinToString("").length == 5
+                ) {
+                    Text("Verify Code", fontSize = 16.sp)
+                }
             }
             TextButton(onClick = { navController.popBackStack() }) {
                 Text("Change Email Address")

@@ -51,6 +51,8 @@ enum class NotificationType {
 @Composable
 fun NotificationScreen(navController: NavController, viewModel: NotificationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
     val notifications by viewModel.notifications.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
 
     Scaffold(
         topBar = {
@@ -83,16 +85,58 @@ fun NotificationScreen(navController: NavController, viewModel: NotificationView
         },
         containerColor = Color.White 
     ) { padding ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
         ) {
-            items(notifications) { notification ->
-                NotificationCard(notification)
+            if (isLoading && notifications.isEmpty()) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color(0xFF00ACC1)
+                )
+            } else if (error != null && notifications.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Outlined.Warning, contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.LightGray)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(error!!, textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = Color.Gray)
+                    Button(
+                        onClick = { viewModel.fetchNotifications() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        Text("Retry")
+                    }
+                }
+            } else if (notifications.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color(0xFFE0E0E0))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("No notifications yet", color = Color.Gray, fontWeight = FontWeight.Medium)
+                    Text("We'll notify you when something important happens", color = Color.LightGray, fontSize = 14.sp)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
+                ) {
+                    items(notifications) { notification ->
+                        NotificationCard(notification)
+                    }
+                }
             }
         }
     }

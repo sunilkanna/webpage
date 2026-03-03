@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.UploadFile
 import com.simats.genecare.data.Counselor
 import com.simats.genecare.data.TimeSlot
 import com.simats.genecare.ui.theme.GenecareTheme
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,10 +41,21 @@ fun BookSessionScreen(
     viewModel: BookingViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Show error messages via Snackbar
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearErrorMessage()
+        }
+    }
 
     if (uiState.isBookingConfirmed) {
-        // Simple success handling
+        // Reset state first so re-opening BookSessionScreen doesn't immediately jump away
         LaunchedEffect(Unit) {
+            viewModel.resetBookingState()
             navController.navigate("appointment_details") {
                 popUpTo("book_session") { inclusive = true }
             }
@@ -71,7 +83,8 @@ fun BookSessionScreen(
                 )
             )
         },
-        containerColor = Color(0xFFF8FBFF)
+        containerColor = Color(0xFFF8FBFF),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -90,13 +103,41 @@ fun BookSessionScreen(
                 color = Color(0xFF0D1B2A)
             )
             Spacer(modifier = Modifier.height(12.dp))
-            uiState.counselors.forEach { counselor ->
-                CounselorCard(
-                    counselor = counselor,
-                    isSelected = uiState.selectedCounselor?.id == counselor.id,
-                    onSelect = { viewModel.selectCounselor(counselor) }
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFF00ACC1))
+                }
+            } else if (uiState.counselors.isEmpty()) {
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No counselors available at the moment.",
+                            color = Color(0xFFE65100),
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = { viewModel.refreshCounselors() }) {
+                            Text("Tap to Retry", color = Color(0xFF00ACC1), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            } else {
+                uiState.counselors.forEach { counselor ->
+                    CounselorCard(
+                        counselor = counselor,
+                        isSelected = uiState.selectedCounselor?.id == counselor.id,
+                        onSelect = { viewModel.selectCounselor(counselor) }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -117,7 +158,8 @@ fun BookSessionScreen(
                 selectedDate = uiState.selectedDate,
                 onDateSelected = { viewModel.selectDate(it) },
                 onPrevMonth = { viewModel.previousMonth() },
-                onNextMonth = { viewModel.nextMonth() }
+                onNextMonth = { viewModel.nextMonth() },
+                viewModel = viewModel
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -258,7 +300,8 @@ fun CalendarCard(
     selectedDate: String,
     onDateSelected: (String) -> Unit,
     onPrevMonth: () -> Unit,
-    onNextMonth: () -> Unit
+    onNextMonth: () -> Unit,
+    viewModel: BookingViewModel? = null
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -293,19 +336,33 @@ fun CalendarCard(
                             val index = row * 7 + col
                             if (index < days.size) {
                                 val day = days[index]
+                                val dayNum = day.toIntOrNull()
+                                val isPast = dayNum != null && viewModel?.isPastDate(dayNum) == true
                                 val isSelected = day == selectedDate
                                 Box(
                                     modifier = Modifier
                                         .size(40.dp)
                                         .clip(CircleShape)
-                                        .background(if (isSelected) Color(0xFF00ACC1) else Color.Transparent)
-                                        .clickable { onDateSelected(day) },
+                                        .background(
+                                            when {
+                                                isSelected && !isPast -> Color(0xFF00ACC1)
+                                                else -> Color.Transparent
+                                            }
+                                        )
+                                        .then(
+                                            if (!isPast) Modifier.clickable { onDateSelected(day) }
+                                            else Modifier
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = day,
-                                        color = if (isSelected) Color.White else Color(0xFF0D1B2A),
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        color = when {
+                                            isPast -> Color(0xFFBDBDBD)
+                                            isSelected -> Color.White
+                                            else -> Color(0xFF0D1B2A)
+                                        },
+                                        fontWeight = if (isSelected && !isPast) FontWeight.Bold else FontWeight.Normal
                                     )
                                 }
                             } else {

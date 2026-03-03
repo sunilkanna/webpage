@@ -37,6 +37,20 @@ $stmt->bind_param("ssss", $full_name, $email, $password_hash, $user_type);
 
 if ($stmt->execute()) {
     $user_id = $conn->insert_id;
+    
+    // Initialize the respective profile table to ensure data consistency
+    if ($user_type === 'Patient') {
+        $profile_stmt = $conn->prepare("INSERT INTO patient_profiles (user_id) VALUES (?)");
+        $profile_stmt->bind_param("i", $user_id);
+        $profile_stmt->execute();
+        $profile_stmt->close();
+    } else if ($user_type === 'Counselor') {
+        $profile_stmt = $conn->prepare("INSERT INTO counselor_profiles (user_id) VALUES (?)");
+        $profile_stmt->bind_param("i", $user_id);
+        $profile_stmt->execute();
+        $profile_stmt->close();
+    }
+
     ob_clean();
     echo json_encode([
         "status" => "success",

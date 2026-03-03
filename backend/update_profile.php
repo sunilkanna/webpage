@@ -5,14 +5,25 @@ include 'db_connect.php';
 $data = json_decode(file_get_contents("php://input"), true);
 
 $user_id = $_POST['user_id'] ?? $data['user_id'] ?? null;
-$full_name = $_POST['full_name'] ?? $data['full_name'] ?? null;
-$dob = $_POST['date_of_birth'] ?? $data['date_of_birth'] ?? null;
-$gender = $_POST['gender'] ?? $data['gender'] ?? null;
-$phone = $_POST['phone'] ?? $data['phone'] ?? null;
-$address = $_POST['address'] ?? $data['address'] ?? null;
+$full_name = trim($_POST['full_name'] ?? $data['full_name'] ?? '');
+$dob = trim($_POST['date_of_birth'] ?? $data['date_of_birth'] ?? '');
+$gender = trim($_POST['gender'] ?? $data['gender'] ?? '');
+$phone = preg_replace('/[^0-9]/', '', $_POST['phone'] ?? $data['phone'] ?? ''); // Remove non-numeric
+$address = trim($_POST['address'] ?? $data['address'] ?? '');
 
 if (empty($user_id)) {
     echo json_encode(["status" => "error", "message" => "User ID is required"]);
+    exit();
+}
+
+// Basic Backend Validation
+if (!empty($dob) && strtotime($dob) > time()) {
+    echo json_encode(["status" => "error", "message" => "Date of birth cannot be in the future"]);
+    exit();
+}
+
+if (!empty($phone) && (strlen($phone) < 10 || strlen($phone) > 15)) {
+    echo json_encode(["status" => "error", "message" => "Invalid phone number format"]);
     exit();
 }
 
