@@ -83,7 +83,7 @@ fun CounselorDashboardScreen(
                         TodaysSchedule(
                             appointments = stats?.todayAppointments ?: emptyList(),
                             onViewAllClick = { navController.navigate("counselor_appointments") },
-                            onStartClick = { appointmentId -> navController.navigate("video_call/$appointmentId") }
+                            onStartClick = { appointmentId -> navController.navigate("video-call/$appointmentId") }
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                     }

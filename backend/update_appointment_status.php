@@ -1,5 +1,6 @@
 <?php
 include 'db_connect.php';
+// Email logic is now handled by send_confirmation_email.py
 
 $data = json_decode(file_get_contents("php://input"), true);
 $appointment_id = $_POST['appointment_id'] ?? $data['appointment_id'] ?? null;
@@ -16,8 +17,8 @@ try {
     // If confirming, generate a meeting link
     $meeting_link = null;
     if ($status === 'Confirmed') {
-        $token = bin2hex(random_bytes(6)); // 12 char random string
-        $meeting_link = "https://meet.systemli.org/genecare-session-" . $appointment_id . "-" . $token;
+        // Updated: Point to the GeneCare website session page instead of direct Jitsi
+        $meeting_link = WEBSITE_URL . "/video-call/" . $appointment_id;
         
         $stmt = $conn->prepare("UPDATE appointments SET status = ?, meeting_link = ? WHERE id = ?");
         $stmt->bind_param("ssi", $status, $meeting_link, $appointment_id);
@@ -63,6 +64,50 @@ try {
         $notify->bind_param("iss", $appt_data['patient_id'], $title, $message);
         $notify->execute();
         $notify->close();
+
+        // Send email to patient when session is confirmed
+        $email_sent = false;
+        $email_error = null;
+        if ($status === 'Confirmed' && $meeting_link) {
+            try {
+
+                // Get patient email
+                $pe_stmt = $conn->prepare("SELECT email, full_name FROM users WHERE id = ?");
+                $pe_stmt->bind_param("i", $appt_data['patient_id']);
+                $pe_stmt->execute();
+                $pe_result = $pe_stmt->get_result();
+                $patient_data = $pe_result->fetch_assoc();
+                $pe_stmt->close();
+
+                if ($patient_data && !empty($patient_data['email'])) {
+                    $patient_email = $patient_data['email'];
+                    $patient_name = $patient_data['full_name'] ?? 'Patient';
+                    $appt_date = $appt_data['appointment_date'];
+                    $appt_time = $appt_data['time_slot'];
+
+                    // CALL PYTHON EMAIL SERVICE
+                    // Escape arguments to prevent shell injection
+                    $p_email = escapeshellarg($patient_email);
+                    $p_name = escapeshellarg($patient_name);
+                    $c_name = escapeshellarg($counselor_name);
+                    $a_date = escapeshellarg($appt_date);
+                    $a_time = escapeshellarg($appt_time);
+                    $m_link = escapeshellarg($meeting_link);
+
+                    $script_path = __DIR__ . DIRECTORY_SEPARATOR . "send_confirmation_email.py";
+                    $command = "python \"$script_path\" $p_email $p_name $c_name $a_date $a_time $m_link 2>&1";
+                    $output = shell_exec($command);
+                    
+                    if (strpos($output, 'SUCCESS') !== false) {
+                        $email_sent = true;
+                    } else {
+                        $email_error = "Python Service Error: " . trim($output);
+                    }
+                }
+            } catch (Exception $e) {
+                $email_error = $e->getMessage();
+            }
+        }
     }
 
     $conn->commit();
@@ -70,6 +115,12 @@ try {
     $response = ["status" => "success", "message" => "Appointment updated to $status"];
     if ($meeting_link) {
         $response["meeting_link"] = $meeting_link;
+    }
+    if ($email_sent) {
+        $response["email_sent"] = true;
+    }
+    if ($email_error) {
+        $response["email_error"] = $email_error;
     }
     echo json_encode($response);
 

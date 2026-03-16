@@ -1,21 +1,21 @@
 <?php
-error_reporting(0);
-ini_set('display_errors', 0);
-mysqli_report(MYSQLI_REPORT_OFF);
-header('Content-Type: application/json');
+// db_connect.php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-$servername = "127.0.0.1";
+$servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "genecare_db";
 
-// Create connection
+// Website Base URL for video calls and redirection
+define('WEBSITE_URL', 'http://172.20.10.2:5173');
+
 try {
     $conn = new mysqli($servername, $username, $password, $dbname);
-
-    // Check connection
     if ($conn->connect_error) {
-        throw new Exception("Connection failed: " . $conn->connect_error);
+        die("Connection failed: " . $conn->connect_error);
     }
 } catch (Exception $e) {
     die(json_encode(["status" => "error", "message" => $e->getMessage()]));

@@ -51,7 +51,7 @@ fun WelcomeScreen(navController: NavController) {
         )
         Spacer(modifier = Modifier.height(32.dp))
         Text(
-            text = "Welcome to GeneCare",
+            text = "Welcome to Curogenea",
             style = MaterialTheme.typography.headlineMedium
         )
         Spacer(modifier = Modifier.height(16.dp))

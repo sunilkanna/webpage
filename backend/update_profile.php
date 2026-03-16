@@ -25,8 +25,8 @@ if (!empty($dob) && strtotime($dob) > time()) {
     exit();
 }
 
-if (!empty($phone) && strlen($phone) != 10) {
-    echo json_encode(["status" => "error", "message" => "Phone number must be exactly 10 digits"]);
+if (!empty($phone) && (strlen($phone) < 10 || strlen($phone) > 15)) {
+    echo json_encode(["status" => "error", "message" => "Invalid phone number format"]);
     exit();
 }
 

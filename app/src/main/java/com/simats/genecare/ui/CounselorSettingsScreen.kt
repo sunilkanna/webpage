@@ -65,7 +65,7 @@ fun CounselorSettingsScreen(navController: NavController) {
                 onCheckedChange = { availabilityStatus = it }
             )
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             SettingsSectionHeader("Notifications")
             SettingSwitchItem(
@@ -76,7 +76,7 @@ fun CounselorSettingsScreen(navController: NavController) {
                 onCheckedChange = { notificationsEnabled = it }
             )
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             SettingsSectionHeader("Account")
             SettingItem(

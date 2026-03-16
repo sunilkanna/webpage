@@ -184,13 +184,13 @@ fun OverallRiskCard(riskLevel: String, riskScore: Int, lastUpdated: String) {
                 
                 Box(contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(
-                        progress = 1f,
+                        progress = { 1f },
                         modifier = Modifier.size(80.dp),
                         color = Color(0xFFE0E0E0),
                         strokeWidth = 8.dp,
                     )
                     CircularProgressIndicator(
-                        progress = progress.value,
+                        progress = { progress.value },
                         modifier = Modifier.size(80.dp),
                         color = if (riskScore < 20) Color(0xFF4CAF50) else if (riskScore < 50) Color(0xFFFFA000) else Color(0xFFF44336),
                         strokeWidth = 8.dp,
@@ -218,7 +218,7 @@ fun OverallRiskCard(riskLevel: String, riskScore: Int, lastUpdated: String) {
             }
             Spacer(modifier = Modifier.height(4.dp))
             LinearProgressIndicator(
-                progress = progress.value,
+                progress = { progress.value },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

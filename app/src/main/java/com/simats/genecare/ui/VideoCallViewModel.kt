@@ -56,9 +56,10 @@ class VideoCallViewModel : ViewModel() {
                         _callStatus.value = msg
                     } else {
                         val jwtParam = if (!body.jwt.isNullOrEmpty()) "?jwt=${body.jwt}" else ""
+                        val baseMeetingLink = body.jitsiDirectLink ?: body.meetingLink
                         _state.value = _state.value.copy(
                             isLoading = false,
-                            meetingLink = body.meetingLink + "$jwtParam#config.disableDeepLinking=true&config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.requireDisplayName=true&config.p2p.enabled=false&config.disableSelfView=false&interfaceConfig.TOOLBAR_BUTTONS=[]&config.toolbarButtons=[]&config.disableTileView=true&config.hideConferenceTimer=true&config.hideParticipantsStats=true&config.disableRemoteMute=true",
+                            meetingLink = baseMeetingLink + "$jwtParam#config.disableDeepLinking=true&config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.requireDisplayName=true&config.p2p.enabled=false&config.disableSelfView=false&interfaceConfig.TOOLBAR_BUTTONS=[]&config.toolbarButtons=[]&config.disableTileView=true&config.hideConferenceTimer=true&config.hideParticipantsStats=true&config.disableRemoteMute=true",
                             jwt = body.jwt,
                             counselorName = body.counselorName ?: "Doctor",
                             patientName = body.patientName ?: "Patient",

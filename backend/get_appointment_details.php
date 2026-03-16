@@ -1,12 +1,14 @@
 <?php
 include 'db_connect.php';
 
-$appointment_id = $_GET['appointment_id'] ?? null;
+$data = json_decode(file_get_contents("php://input"), true);
+$appointment_id = $data['appointment_id'] ?? $_GET['appointment_id'] ?? null;
 
 if (!$appointment_id) {
     echo json_encode(["status" => "error", "message" => "Appointment ID required"]);
     exit();
 }
+
 
 // Fetch appointment details along with patient and counselor info, including session fields
 $sql = "SELECT a.id, a.patient_id, a.counselor_id, a.appointment_date, a.time_slot, 

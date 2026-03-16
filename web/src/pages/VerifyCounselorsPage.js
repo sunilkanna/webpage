@@ -66,20 +66,46 @@ const VerifyCounselorsPage = () => {
                             <p><strong>Specialization:</strong> {counselor.specialization || 'Not Specified'}</p>
                             <p><strong>Experience:</strong> {counselor.experience_years || 0} years</p>
                             <p><strong>Fee:</strong> ₹{counselor.consultation_fee || 0}</p>
-                            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+                            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                 <button
-                                    className="btn btn-primary"
-                                    style={{ flex: 1 }}
+                                    className="btn"
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: '#00C853',
+                                        color: 'white',
+                                        borderRadius: '26px',
+                                        height: '52px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        border: 'none',
+                                        cursor: 'pointer'
+                                    }}
                                     onClick={() => handleVerify(counselor.user_id, 'Approved')}
                                 >
-                                    Approve
+                                    <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>✓</span> Approve Counselor
                                 </button>
                                 <button
                                     className="btn"
-                                    style={{ flex: 1, backgroundColor: '#f4f5f7' }}
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: '#D50000',
+                                        color: 'white',
+                                        borderRadius: '26px',
+                                        height: '52px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        border: 'none',
+                                        cursor: 'pointer'
+                                    }}
                                     onClick={() => handleVerify(counselor.user_id, 'Rejected')}
                                 >
-                                    Reject
+                                    <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>✕</span> Reject Application
                                 </button>
                             </div>
                         </div>

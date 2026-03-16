@@ -76,7 +76,7 @@ fun SystemSettingsScreen(navController: NavController) {
                     onCheckedChange = { viewModel.updateSetting("maintenance_mode", it) }
                 )
                 
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 // Notifications Section
                 SettingsSectionHeader("Notifications")
@@ -95,7 +95,7 @@ fun SystemSettingsScreen(navController: NavController) {
                     onCheckedChange = { viewModel.updateSetting("push_notifications", it) }
                 )
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 // Appearance Section
                 SettingsSectionHeader("Appearance")
@@ -107,7 +107,7 @@ fun SystemSettingsScreen(navController: NavController) {
                     onCheckedChange = { viewModel.updateSetting("dark_mode", it) }
                 )
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 // Security Section
                 SettingsSectionHeader("Security")

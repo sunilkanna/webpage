@@ -21,8 +21,8 @@ function generateJitsiJwt($appId, $keyId, $privateKey, $roomName, $userName, $is
         "exp" => $now + 3600, // Token valid for 1 hour
         "context" => [
             "user" => [
-                "id" => (string)$userId,
-                "name" => (string)$userName,
+                "id" => (string)$userId, // Include unique user ID
+                "name" => $userName,
                 "email" => "",
                 "avatar" => "",
                 "moderator" => $isModerator ? true : false

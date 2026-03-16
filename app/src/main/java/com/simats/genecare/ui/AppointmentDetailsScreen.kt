@@ -125,7 +125,7 @@ fun AppointmentDetailsScreen(
                 onClick = { 
                     if (uiState.isSessionApproved) {
                         val apptId = uiState.lastBookedAppointmentId ?: 0
-                        navController.navigate("video_call/$apptId")
+                        navController.navigate("video-call/$apptId")
                     }
                 },
                 enabled = uiState.isSessionApproved,

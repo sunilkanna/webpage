@@ -1,0 +1,3 @@
+uploads\
+PHPMailer-6.9.1\
+.git\

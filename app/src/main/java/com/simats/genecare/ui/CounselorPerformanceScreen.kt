@@ -9,8 +9,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -91,7 +91,7 @@ fun PerformanceMetricCard(metric: PerformanceMetric) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    if (metric.isPositive) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                    if (metric.isPositive) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
                     contentDescription = null,
                     tint = if (metric.isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
                     modifier = Modifier.size(16.dp)

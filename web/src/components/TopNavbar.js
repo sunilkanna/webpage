@@ -10,7 +10,7 @@ const TopNavbar = () => {
         <header className="top-navbar">
             <div className="top-navbar-left">
                 <div className="breadcrumb">
-                    <span>Genecare</span>
+                    <span>Curogenea</span>
                     <span className="breadcrumb-separator">/</span>
                     <span className="breadcrumb-current">{user.user_type} Portal</span>
                 </div>

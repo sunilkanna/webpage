@@ -13,12 +13,12 @@ const Sidebar = () => {
         { path: '/patients', label: 'My Patients', icon: '👥', role: ['Counselor'] },
         { path: '/session-requests', label: 'Requests', icon: '📩', role: ['Counselor'] },
         { path: '/reports', label: user.user_type === 'Admin' ? 'System Logs' : 'Reports & Logs', icon: '📊' },
-        { path: '/my-results', label: 'My Results', icon: '📄', role: ['Patient'] },
+
         { path: '/chat', label: 'Messages', icon: '💬' },
         { path: '/risk-assessment', label: 'Risk Test', icon: '🧬', role: ['Patient'] },
         { path: '/verify', label: 'Verify Counselors', icon: '✓', role: ['Admin'] },
         { path: '/users', label: 'User Management', icon: '👥', role: ['Admin'] },
-        { path: '/analytics', label: 'Analytics', icon: '📈', role: ['Admin'] },
+
         { path: '/settings', label: 'Settings', icon: '⚙️', role: ['Admin'] },
         { path: '/profile', label: 'My Profile', icon: '👤' },
     ];
@@ -33,8 +33,8 @@ const Sidebar = () => {
     return (
         <aside className={`sidebar ${themeClass}`}>
             <div className="sidebar-brand">
-                <img src={logo} alt="Genecare Logo" className="brand-logo-img" />
-                <span className="brand-name">Genecare</span>
+                <img src={logo} alt="Curogenea Logo" className="brand-logo-img" />
+                <span className="brand-name">Curogenea</span>
             </div>
 
             <nav className="sidebar-nav">

@@ -103,12 +103,13 @@ const DashboardPage = () => {
                         </div>
                         <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem' }}>Chat</p>
                     </div>
-                    <div className="card shadow-sm" style={{ textAlign: 'center', padding: '1.25rem', cursor: 'pointer' }} onClick={() => navigate('/my-results')}>
+                    <div className="card shadow-sm" style={{ textAlign: 'center', padding: '1.25rem', cursor: 'pointer' }} onClick={() => navigate('/profile')}>
                         <div className="quick-action-icon" style={{ backgroundColor: '#fff8e1' }}>
-                            <span style={{ color: '#ffa000' }}>📄</span>
+                            <span style={{ color: '#ffa000' }}>👤</span>
                         </div>
-                        <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem' }}>My Results</p>
+                        <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem' }}>My Profile</p>
                     </div>
+
                 </div>
 
                 {/* Health Insights */}
@@ -246,12 +247,6 @@ const DashboardPage = () => {
                         </div>
                         <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#616161', margin: 0 }}>Reports</p>
                     </div>
-                    <div className="card action-card shadow-sm" onClick={() => navigate('/performance')} style={{ cursor: 'pointer', textAlign: 'center', padding: '1rem' }}>
-                        <div style={{ backgroundColor: '#E8F5E9', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
-                            <span style={{ color: '#43A047' }}>📈</span>
-                        </div>
-                        <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#616161', margin: 0 }}>Performance</p>
-                    </div>
                     <div className="card action-card shadow-sm" onClick={() => navigate('/profile')} style={{ cursor: 'pointer', textAlign: 'center', padding: '1rem' }}>
                         <div style={{ backgroundColor: '#F5F5F5', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
                             <span style={{ color: '#616161' }}>⚙️</span>
@@ -261,29 +256,6 @@ const DashboardPage = () => {
                 </div>
             </div>
 
-            {/* Weekly Summary */}
-            <div className="card weekly-summary" style={{ marginBottom: '2.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                    <span style={{ color: '#3f51b5' }}>📈</span>
-                    <h4 style={{ color: 'var(--indigo-deep)', margin: 0 }}>This Week Summary</h4>
-                </div>
-                <div className="summary-row">
-                    <span style={{ color: '#7986cb' }}>Sessions Completed</span>
-                    <span style={{ fontWeight: 'bold', color: 'var(--indigo-deep)' }}>24</span>
-                </div>
-                <div className="summary-row">
-                    <span style={{ color: '#7986cb' }}>New Patients</span>
-                    <span style={{ fontWeight: 'bold', color: 'var(--indigo-deep)' }}>8</span>
-                </div>
-                <div className="summary-row">
-                    <span style={{ color: '#7986cb' }}>Revenue</span>
-                    <span style={{ fontWeight: 'bold', color: '#43a047' }}>₹{stats?.counselor_stats?.revenue_this_month || '18,400'}</span>
-                </div>
-                <div className="summary-row">
-                    <span style={{ color: '#7986cb' }}>Avg. Session Time</span>
-                    <span style={{ fontWeight: 'bold', color: 'var(--indigo-deep)' }}>52 min</span>
-                </div>
-            </div>
 
             {/* Recent Reviews */}
             <div style={{ marginBottom: '2rem' }}>

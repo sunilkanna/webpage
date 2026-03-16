@@ -152,8 +152,16 @@ fun NavGraph(startDestination: String = "splash") {
             SessionRequestsScreen(navController = navController, viewModel = counselorViewModel)
         }
         composable(
-            "video_call/{appointmentId}",
-            arguments = listOf(androidx.navigation.navArgument("appointmentId") { type = androidx.navigation.NavType.IntType })
+            "video-call/{appointmentId}",
+            arguments = listOf(androidx.navigation.navArgument("appointmentId") { type = androidx.navigation.NavType.IntType }),
+            deepLinks = listOf(
+                androidx.navigation.navDeepLink {
+                    uriPattern = "http://172.20.10.2:5173/video-call/{appointmentId}"
+                },
+                androidx.navigation.navDeepLink {
+                    uriPattern = "https://172.20.10.2:5173/video-call/{appointmentId}"
+                }
+            )
         ) { backStackEntry ->
             val appointmentId = backStackEntry.arguments?.getInt("appointmentId") ?: 0
             VideoCallScreen(navController = navController, appointmentId = appointmentId)

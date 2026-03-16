@@ -78,6 +78,7 @@ data class StartSessionResponse(
     @SerializedName("appointment_date") val appointmentDate: String?,
     @SerializedName("time_slot") val timeSlot: String?,
     @SerializedName("medical_report_url") val medicalReportUrl: String? = null,
+    @SerializedName("jitsi_direct_link") val jitsiDirectLink: String? = null,
     @SerializedName("patient_reports") val patientReports: List<SessionReport>? = null,
     @SerializedName("jwt") val jwt: String? = null,
     @SerializedName("jwt_error") val jwtError: String? = null,

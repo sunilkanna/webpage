@@ -97,7 +97,7 @@ const ReportsAndLogsPage = () => {
                             <div style={{ fontSize: '0.75rem', color: '#999' }}>{new Date(report.uploaded_at || report.created_at || report.report_date).toLocaleDateString()}</div>
                         </td>
                         <td style={{ padding: '1rem' }}>
-                            <a href={report.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>View</a>
+                            <a href={report.file_url || report.fileUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>View</a>
                         </td>
                     </tr>
                 ))}

@@ -16,9 +16,10 @@ $uploadOk = 1;
 if(isset($_FILES["file"])) {
     if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
         // Dynamic server IP detection or use localhost for dev
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
-        $host = $_SERVER['HTTP_HOST']; 
-        $file_url = $protocol . "://" . $host . "/genecare/" . $target_file;
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+            $host = $_SERVER['HTTP_HOST']; 
+            $saved_name = $unique_prefix . "_" . $file_name;
+            $file_url = $protocol . "://" . $host . "/genecare/view_report.php?file=" . urlencode($saved_name);
 
         $stmt = $conn->prepare("INSERT INTO patient_reports (patient_id, file_name, file_url) VALUES (?, ?, ?)");
         $stmt->bind_param("iss", $patient_id, $file_name, $file_url);

@@ -142,14 +142,21 @@ const BookAppointmentPage = () => {
                                 />
                             </div>
                             <div className="input-group">
-                                <label>Preferred Time (e.g. 10:00 AM)</label>
-                                <input
-                                    type="text"
-                                    value={appointmentData.time}
-                                    onChange={(e) => setAppointmentData({ ...appointmentData, time: e.target.value })}
-                                    placeholder="e.g. 10:00 AM"
-                                    required
-                                />
+                                <label>Available Time Slots</label>
+                                <div className="time-slot-grid">
+                                    {[
+                                        '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+                                        '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'
+                                    ].map((time) => (
+                                        <div
+                                            key={time}
+                                            className={`time-slot-item ${appointmentData.time === time ? 'selected' : ''}`}
+                                            onClick={() => setAppointmentData({ ...appointmentData, time })}
+                                        >
+                                            {time}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="input-group">

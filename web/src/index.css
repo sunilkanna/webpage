@@ -111,6 +111,39 @@ button {
   border: 1px solid #dfe1e6;
   border-radius: var(--border-radius);
   font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.time-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.time-slot-item {
+  padding: 0.85rem;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: white;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-slot-item:hover {
+  border-color: var(--teal-main);
+  background-color: var(--teal-light);
+  color: var(--teal-dark);
+}
+
+.time-slot-item.selected {
+  background-color: var(--teal-light);
+  border-color: var(--teal-main);
+  color: var(--teal-dark);
+  box-shadow: 0 4px 12px rgba(0, 172, 193, 0.15);
 }
 
 .input-group input:focus {

@@ -86,7 +86,7 @@ const PaymentPage = () => {
                     key: response.data.key_id,
                     amount: response.data.amount,
                     currency: "INR",
-                    name: "GeneCare",
+                    name: "Curogenea",
                     description: "Genetic Consultation Payment",
                     order_id: response.data.razorpay_order_id,
                     handler: async (response) => {

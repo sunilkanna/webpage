@@ -17,7 +17,7 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 try {
     // Fetch appointments for this counselor
     $sql = "SELECT DISTINCT a.id, a.appointment_date, a.time_slot, a.status, a.meeting_link, a.medical_report_url,
-                   u.full_name as patient_name, pp.profile_image_url as patient_image,
+                   u.full_name as patient_name, u.email as patient_email, pp.profile_image_url as patient_image,
                    'Initial Consultation' as type,
                    'Routine Checkup' as reason,
                    (SELECT COUNT(*) FROM patient_reports pr WHERE pr.patient_id = a.patient_id) as patient_report_count,

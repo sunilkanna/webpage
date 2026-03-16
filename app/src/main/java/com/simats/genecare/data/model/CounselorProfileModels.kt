@@ -44,7 +44,9 @@ data class CounselorProfileData(
 data class GenericResponse(
     @SerializedName("status") val status: String,
     @SerializedName("message") val message: String,
-    @SerializedName("file_url") val fileUrl: String? = null
+    @SerializedName("file_url") val fileUrl: String? = null,
+    @SerializedName("email_sent") val emailSent: Boolean? = null,
+    @SerializedName("email_error") val emailError: String? = null
 )
 
 // Counselor Qualifications

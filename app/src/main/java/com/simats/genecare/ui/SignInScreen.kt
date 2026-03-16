@@ -82,34 +82,30 @@ fun SignInScreen(
             is LoginState.Success -> {
                 Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
                 val user = state.user
-                if (user != null) {
-                    com.simats.genecare.data.UserSession.login(user)
-                    
-                    // Navigate based on backend user type
-                    when (user.userType) {
-                        "Patient" -> navController.navigate("dashboard") {
-                            popUpTo(0) { inclusive = true }
-                        }
-                        "Counselor" -> {
-                            if (user.verificationStatus == "Approved") {
-                                navController.navigate("counselor_dashboard") {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            } else {
-                                navController.navigate("counselor_pending_dashboard") {
-                                    popUpTo(0) { inclusive = true }
-                                }
+                com.simats.genecare.data.UserSession.login(user)
+                
+                // Navigate based on backend user type
+                when (user.userType) {
+                    "Patient" -> navController.navigate("dashboard") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                    "Counselor" -> {
+                        if (user.verificationStatus == "Approved") {
+                            navController.navigate("counselor_dashboard") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate("counselor_pending_dashboard") {
+                                popUpTo(0) { inclusive = true }
                             }
                         }
-                        "Admin" -> navController.navigate("admin_dashboard") {
-                            popUpTo(0) { inclusive = true }
-                        }
-                        else -> navController.navigate("dashboard") {
-                            popUpTo(0) { inclusive = true }
-                        }
                     }
-                } else {
-                     Toast.makeText(context, "Login failed: No user data", Toast.LENGTH_SHORT).show()
+                    "Admin" -> navController.navigate("admin_dashboard") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                    else -> navController.navigate("dashboard") {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
                 viewModel.resetState()
             }

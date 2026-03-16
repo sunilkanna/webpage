@@ -69,7 +69,7 @@ const VideoCallPage = () => {
         const domain = '8x8.vc';
 
         const appId = data.jaas_app_id || 'vpaas-magic-cookie-2b60b72ee4404d33bc70c84652835e3a';
-        const roomName = `genecare-room-${appointmentId}`;
+        const roomName = `curogenea-room-${appointmentId}`;
 
         const options = {
             roomName: `${appId}/${roomName}`,
@@ -81,18 +81,23 @@ const VideoCallPage = () => {
                 displayName: user.full_name
             },
             configOverwrite: {
-                disableThirdPartyRequests: true,
                 prejoinPageEnabled: false,
-                disableDeepLinking: true, // Force Jitsi to run in browser instead of app
-                startWithAudioMuted: true,
+                disableDeepLinking: true,
+                startWithAudioMuted: false,
                 startWithVideoMuted: false,
                 enableWelcomePage: false,
-                mobileAppProto: 'genecare' // Custom protocol
+                p2p: {
+                    enabled: false
+                },
+                disableTileView: true,
+                hideConferenceTimer: true,
+                hideParticipantsStats: true
             },
             interfaceConfigOverwrite: {
                 SHOW_JITSI_WATERMARK: false,
                 SHOW_WATERMARK_FOR_GUESTS: false,
-                MOBILE_APP_PROMO: false, // Don't ask to download the app
+                MOBILE_APP_PROMO: false,
+                DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
             }
 
         };
@@ -106,10 +111,20 @@ const VideoCallPage = () => {
         });
     };
 
-    const handleCallEnded = () => {
+    const handleCallEnded = async () => {
         if (user.user_type === 'Patient') {
+            try {
+                await appointmentService.endSession(appointmentId);
+            } catch (err) {
+                console.error('Failed to end session:', err);
+            }
             navigate(`/payment/${appointmentId}`);
         } else {
+            try {
+                await appointmentService.endSession(appointmentId);
+            } catch (err) {
+                console.error('Failed to end session:', err);
+            }
             navigate('/dashboard');
         }
     };
@@ -138,7 +153,7 @@ const VideoCallPage = () => {
                 borderBottom: '1px solid #333'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ color: '#00acc1', fontWeight: 'bold' }}>GENECARE LIVE</span>
+                    <span style={{ color: '#00acc1', fontWeight: 'bold' }}>CUROGENEA LIVE</span>
                     <span style={{ opacity: 0.6 }}>|</span>
                     <span>Conversation with {user.user_type === 'Counselor' ? sessionData?.patient_name : `Dr. ${sessionData?.counselor_name}`}</span>
                 </div>

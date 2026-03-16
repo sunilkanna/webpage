@@ -78,9 +78,10 @@ try {
             $jwt_error = "Failed to generate JWT. Check OpenSSL and keys.";
         }
         
-        $meeting_link = "https://8x8.vc/" . JAAS_APP_ID . "/" . $room_name;
+        
+        $meeting_link = WEBSITE_URL . "/video-call/" . $appointment_id;
 
-        if (empty($appointment['meeting_link']) || strpos($appointment['meeting_link'], '8x8.vc') === false) {
+        if (empty($appointment['meeting_link']) || strpos($appointment['meeting_link'], WEBSITE_URL) === false) {
             $fix = $conn->prepare("UPDATE appointments SET meeting_link = ? WHERE id = ?");
             $fix->bind_param("si", $meeting_link, $appointment_id);
             $fix->execute();
@@ -88,8 +89,8 @@ try {
         }
     } else {
         $jwt_error = "JaaS not configured, using public fallback";
-        if (empty($appointment['meeting_link'])) {
-            $meeting_link = "https://meet.jit.si/" . $room_name;
+        if (empty($appointment['meeting_link']) || strpos($appointment['meeting_link'], WEBSITE_URL) === false) {
+            $meeting_link = WEBSITE_URL . "/video-call/" . $appointment_id;
             $fix = $conn->prepare("UPDATE appointments SET meeting_link = ? WHERE id = ?");
             $fix->bind_param("si", $meeting_link, $appointment_id);
             $fix->execute();
@@ -100,29 +101,38 @@ try {
     }
 
     // Fetch patient reports
-    $report_stmt = $conn->prepare("SELECT file_name, file_url, uploaded_at FROM patient_reports WHERE patient_id = ? ORDER BY uploaded_at DESC");
-    $report_stmt->bind_param("i", $appointment['patient_id']);
+    $report_stmt = $conn->prepare("SELECT * FROM patient_reports WHERE patient_id = ? ORDER BY uploaded_at DESC");
+    $patient_id = $appointment['patient_id'];
+    $report_stmt->bind_param("i", $patient_id);
     $report_stmt->execute();
     $report_result = $report_stmt->get_result();
-    $reports = [];
+    $patient_reports = [];
     while ($row = $report_result->fetch_assoc()) {
-        $reports[] = $row;
+        $patient_reports[] = [
+            "file_name" => $row['file_name'] ?? 'Report',
+            "file_url" => $row['file_url'],
+            "uploaded_at" => $row['uploaded_at']
+        ];
     }
     $report_stmt->close();
+
+    $jitsi_direct_link = "https://8x8.vc/" . JAAS_APP_ID . "/" . $room_name;
 
     echo json_encode([
         "status" => "success",
         "message" => "Session started",
         "meeting_link" => $meeting_link,
+        "jitsi_direct_link" => $jitsi_direct_link,
         "jwt" => $jwt,
         "jwt_error" => $jwt_error,
         "is_moderator" => $is_counselor,
+        "jaas_app_id" => defined('JAAS_APP_ID') ? JAAS_APP_ID : null,
         "patient_name" => $appointment['patient_name'],
         "counselor_name" => $appointment['counselor_name'],
         "appointment_date" => $appointment['appointment_date'],
         "time_slot" => $appointment['time_slot'],
         "medical_report_url" => $appointment['medical_report_url'],
-        "patient_reports" => $reports
+        "patient_reports" => $patient_reports
     ]);
 
 } catch (Throwable $e) {

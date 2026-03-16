@@ -380,6 +380,7 @@ class BookingViewModel(
         val cal = java.util.Calendar.getInstance()
         val year = cal.get(java.util.Calendar.YEAR)
         val month = cal.get(java.util.Calendar.MONTH)
+        val day = cal.get(java.util.Calendar.DAY_OF_MONTH)
         // Reset to initial state but fetch counselors
         viewModelScope.launch {
             val counselorList = repository.fetchCounselors()
@@ -388,7 +389,11 @@ class BookingViewModel(
             _uiState.value = BookingUiState(
                  counselors = counselorList,
                  timeSlots = repository.getTimeSlots(),
-                 selectedCounselor = counselorList.firstOrNull()
+                 selectedCounselor = counselorList.firstOrNull(),
+                 todayYear = year,
+                 todayMonth = month,
+                 todayDay = day,
+                 selectedDate = day.toString()
             )
             // Apply date logic
             updateDateState(year, month)

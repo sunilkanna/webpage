@@ -58,14 +58,6 @@ if ($stmt->execute()) {
     $notify->execute();
     $notify->close();
 
-    if (!empty($medical_report_url)) {
-        $file_name = basename($medical_report_url);
-        $report_stmt = $conn->prepare("INSERT INTO patient_reports (patient_id, file_name, file_url, uploaded_at) VALUES (?, ?, ?, NOW())");
-        $report_stmt->bind_param("iss", $patient_id, $file_name, $medical_report_url);
-        $report_stmt->execute();
-        $report_stmt->close();
-    }
-
     echo json_encode(["status" => "success", "appointment_id" => $appointment_id, "message" => "Appointment booked successfully"]);
 } else {
     echo json_encode(["status" => "error", "message" => $stmt->error]);

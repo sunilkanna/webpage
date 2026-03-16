@@ -359,6 +359,12 @@ class CounselorViewModel : ViewModel() {
             try {
                 val response = authRepository.updateAppointmentStatus(requestId, "Confirmed")
                 if (response.isSuccessful && response.body()?.status == "success") {
+                    val body = response.body()
+                    if (body?.emailSent == true) {
+                        println("Confirmation email sent to patient successfully.")
+                    } else if (body?.emailError != null) {
+                        _error.value = "Session confirmed, but email failed: ${body.emailError}"
+                    }
                     fetchCounselorAppointments()
                 }
             } catch (e: Exception) {

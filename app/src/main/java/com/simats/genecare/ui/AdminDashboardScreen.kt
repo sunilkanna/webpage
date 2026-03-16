@@ -21,7 +21,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Settings
@@ -109,7 +109,7 @@ fun AdminDashboardHeader(navController: NavController, onLogout: () -> Unit, sta
                 }
 
                 IconButton(onClick = onLogout) {
-                    Icon(Icons.Default.Logout, contentDescription = "Logout", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = Color.White)
                 }
             }
         }

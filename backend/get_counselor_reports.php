@@ -8,39 +8,31 @@ if (!$counselor_id) {
     exit();
 }
 
-// Fetch reports from two sources:
-// 1. Central patient_reports (reports uploaded by patients who have an appointment with this counselor)
-// 2. counselor_reports (reports manually created/assigned by the counselor)
-$query = "
+$stmt = $conn->prepare("
     (SELECT 
-        pr.id, 
-        pr.file_name as title, 
-        'Patient Upload' as category, 
-        DATE(pr.uploaded_at) as date, 
-        COALESCE(u.full_name, 'Unknown Patient') as patientName, 
-        pr.patient_id as patientId, 
-        pr.file_url as fileUrl
-    FROM patient_reports pr
-    LEFT JOIN users u ON pr.patient_id = u.id
-    WHERE pr.patient_id IN (
-        SELECT DISTINCT patient_id 
-        FROM appointments 
-        WHERE counselor_id = ?
-    ))
+        a.id as id, 
+        'Booking Report' as title, 
+        'Medical' as category, 
+        a.appointment_date as date, 
+        u.full_name as patientName, 
+        a.patient_id as patientId, 
+        a.medical_report_url as fileUrl
+    FROM appointments a
+    JOIN users u ON a.patient_id = u.id
+    WHERE a.counselor_id = ? AND a.medical_report_url IS NOT NULL AND a.medical_report_url != '')
     UNION ALL
     (SELECT 
-        cr.id, 
-        cr.title, 
-        cr.category, 
-        cr.report_date as date, 
+        c.id as id, 
+        c.title as title, 
+        c.category as category, 
+        c.report_date as date, 
         'System' as patientName, 
         0 as patientId, 
-        cr.file_url as fileUrl
-    FROM counselor_reports cr
-    WHERE cr.counselor_id = ?)
-    ORDER BY date DESC";
-
-$stmt = $conn->prepare($query);
+        c.file_url as fileUrl
+    FROM counselor_reports c
+    WHERE c.counselor_id = ?)
+    ORDER BY date DESC
+");
 $stmt->bind_param("ii", $counselor_id, $counselor_id);
 $stmt->execute();
 $result = $stmt->get_result();

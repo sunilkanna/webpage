@@ -13,8 +13,9 @@ $counselors = $conn->query($counselor_sql)->fetch_assoc()['count'];
 $pending_sql = "SELECT COUNT(*) as count FROM counselor_qualifications WHERE status = 'Pending'";
 $pending = $conn->query($pending_sql)->fetch_assoc()['count'];
 
-// 4. System Alerts (Dummy for now, could be related to errors or flagged activity)
-$alerts = 3; 
+// 4. System Alerts (Counting ERROR and WARNING logs in the last 24 hours)
+$alerts_query = "SELECT COUNT(*) as count FROM system_logs WHERE level IN ('ERROR', 'WARNING') AND timestamp > (NOW() - INTERVAL 1 DAY)";
+$alerts = (int)$conn->query($alerts_query)->fetch_assoc()['count'];
 
 $response = [
     "status" => "success",

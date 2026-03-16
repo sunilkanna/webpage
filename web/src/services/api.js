@@ -31,6 +31,7 @@ export const appointmentService = {
     getAppointments: (userId) => api.get(`get_appointments.php?patient_id=${userId}`),
     getDetails: (appointmentId) => api.post('get_appointment_details.php', { appointment_id: appointmentId }),
     startSession: (appointmentId, userId) => api.post('start_session.php', { appointment_id: appointmentId, user_id: userId }),
+    endSession: (appointmentId) => api.post('end_session.php', { appointment_id: appointmentId }),
 };
 
 export const counselorService = {

@@ -40,8 +40,8 @@ const LoginPage = () => {
     return (
         <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
             <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
-                <img src={logo} alt="Genecare Logo" className="login-logo" />
-                <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Genecare Login</h2>
+                <img src={logo} alt="Curogenea Logo" className="login-logo" />
+                <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Curogenea Login</h2>
 
                 {error && <div style={{ color: 'var(--error)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
 

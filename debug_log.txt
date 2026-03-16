@@ -1,0 +1,16 @@
+Received - user_id: 34, user_type: Counselor, method: 
+RAW INPUT: 
+POST: Array
+(
+    [user_id] => 34
+    [user_type] => Counselor
+)
+
+Received - user_id: 34, user_type: Counselor, method: 
+RAW INPUT: 
+POST: Array
+(
+    [user_id] => 34
+    [user_type] => Counselor
+)
+

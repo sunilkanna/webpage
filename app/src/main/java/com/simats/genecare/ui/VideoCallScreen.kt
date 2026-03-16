@@ -239,10 +239,16 @@ fun VideoCallScreen(navController: NavController, appointmentId: Int = 1) {
                     IconButton(
                         onClick = {
                             isMicOn = !isMicOn
-                            webViewRef?.evaluateJavascript(
-                                "document.querySelector('[aria-label*=\"mic\"], [aria-label*=\"Mic\"]')?.click()",
-                                null
-                            )
+                            val jsCmd = """
+                                if (typeof APP !== 'undefined' && APP.conference) {
+                                    if (APP.conference.isLocalAudioMuted()) {
+                                        APP.conference.unmuteAudio();
+                                    } else {
+                                        APP.conference.muteAudio();
+                                    }
+                                }
+                            """.trimIndent()
+                            webViewRef?.evaluateJavascript(jsCmd, null)
                         },
                         modifier = Modifier
                             .size(56.dp)
@@ -268,11 +274,11 @@ fun VideoCallScreen(navController: NavController, appointmentId: Int = 1) {
                                 val userType = com.simats.genecare.data.UserSession.getUserType()
                                 if (userType == "Patient") {
                                     navController.navigate("session_bill/$appointmentId") {
-                                        popUpTo("video_call/$appointmentId") { inclusive = true }
+                                        popUpTo("video-call/$appointmentId") { inclusive = true }
                                     }
                                 } else {
                                     navController.navigate("counselor_dashboard") {
-                                        popUpTo("video_call/$appointmentId") { inclusive = true }
+                                        popUpTo("video-call/$appointmentId") { inclusive = true }
                                     }
                                 }
                             }
@@ -295,10 +301,16 @@ fun VideoCallScreen(navController: NavController, appointmentId: Int = 1) {
                     IconButton(
                         onClick = {
                             isCameraOn = !isCameraOn
-                            webViewRef?.evaluateJavascript(
-                                "document.querySelector('[aria-label*=\"camera\"], [aria-label*=\"Camera\"]')?.click()",
-                                null
-                            )
+                            val jsCmd = """
+                                if (typeof APP !== 'undefined' && APP.conference) {
+                                    if (APP.conference.isLocalVideoMuted()) {
+                                        APP.conference.unmuteVideo();
+                                    } else {
+                                        APP.conference.muteVideo();
+                                    }
+                                }
+                            """.trimIndent()
+                            webViewRef?.evaluateJavascript(jsCmd, null)
                         },
                         modifier = Modifier
                             .size(56.dp)
