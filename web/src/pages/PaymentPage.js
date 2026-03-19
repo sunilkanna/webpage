@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { appointmentService, paymentService } from '../services/api';
+import { appointmentService, paymentService, adminService } from '../services/api';
 
 const PaymentPage = () => {
     const { sessionId: appointmentId } = useParams();
@@ -28,9 +28,20 @@ const PaymentPage = () => {
                     const appt = response.data.appointment;
                     setAppointmentDetails(appt);
 
+                    // Fetch system settings for GST
+                    let gstRate = 0.05; // Default 5%
+                    try {
+                        const settingsRes = await adminService.getSettings();
+                        if (settingsRes.data.status === 'success') {
+                            gstRate = (parseFloat(settingsRes.data.settings.gst_percentage) || 5) / 100;
+                        }
+                    } catch (e) {
+                        console.error("Failed to load GST setting, using default 5%", e);
+                    }
+
                     const fee = parseFloat(appt.consultation_fee) || 1000;
                     const platform = 50;
-                    const gst = (fee + platform) * 0.18;
+                    const gst = (fee + platform) * gstRate;
                     const total = fee + platform + gst;
 
                     setBillDetails({

@@ -17,6 +17,11 @@ try {
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
     }
+    
+    // Set Timezone for PHP and MySQL
+    date_default_timezone_set('Asia/Kolkata');
+    $conn->query("SET time_zone = '+05:30'");
+
 } catch (Exception $e) {
     die(json_encode(["status" => "error", "message" => $e->getMessage()]));
 }

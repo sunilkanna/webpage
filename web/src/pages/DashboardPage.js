@@ -12,6 +12,12 @@ const DashboardPage = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
+        // Safety redirect for counselors who are not approved
+        if (user?.user_type === 'Counselor' && user?.verification_status !== 'Approved') {
+            navigate('/counselor-pending');
+            return;
+        }
+
         const fetchStats = async () => {
             try {
                 const response = await dashboardService.getStats(user.id, user.user_type);
@@ -48,7 +54,7 @@ const DashboardPage = () => {
                 {/* Appointment Card */}
                 <div
                     className={`card ${appointment ? (isPending ? 'appointment-card-pending' : 'appointment-card-gradient') : 'appointment-card-empty'} shadow`}
-                    onClick={() => appointment && navigate(`/book`)}
+                    onClick={() => appointment && navigate(`/book-appointment`)}
                     style={{ padding: '1.5rem', marginBottom: '2rem', cursor: 'pointer' }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -74,7 +80,7 @@ const DashboardPage = () => {
                             onClick={(e) => {
                                 e.stopPropagation();
                                 if (appointment && isConfirmed) navigate(`/video-call/${appointment.id}`);
-                                else navigate('/book');
+                                else navigate('/book-appointment');
                             }}
                         >
                             {!appointment ? "Book Now" : (isPending ? "Appointment Sent" : "Join Now")}
@@ -85,7 +91,7 @@ const DashboardPage = () => {
                 {/* Quick Actions */}
                 <h3 style={{ color: '#0d1b2a', fontSize: '1.2rem', marginBottom: '1rem', fontWeight: 'bold' }}>Quick Actions</h3>
                 <div className="responsive-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '2.5rem' }}>
-                    <div className="card shadow-sm" style={{ textAlign: 'center', padding: '1.25rem', cursor: 'pointer' }} onClick={() => navigate('/book')}>
+                    <div className="card shadow-sm" style={{ textAlign: 'center', padding: '1.25rem', cursor: 'pointer' }} onClick={() => navigate('/book-appointment')}>
                         <div className="quick-action-icon" style={{ backgroundColor: '#e0f7fa' }}>
                             <span style={{ color: '#00acc1' }}>📅</span>
                         </div>

@@ -28,10 +28,21 @@ $check->execute();
 $check->store_result();
 
 if ($check->num_rows > 0) {
-    echo json_encode(["status" => "error", "message" => "Slot already booked"]);
+    echo json_encode(["status" => "error", "message" => "Slot already booked for this counselor"]);
     exit();
 }
 $check->close();
+
+// Check if patient already has an appointment at this time
+$p_check = $conn->prepare("SELECT id FROM appointments WHERE patient_id = ? AND appointment_date = ? AND time_slot = ? AND status != 'Cancelled'");
+$p_check->bind_param("iss", $patient_id, $date, $time);
+$p_check->execute();
+$p_check->store_result();
+if ($p_check->num_rows > 0) {
+    echo json_encode(["status" => "error", "message" => "You already have an appointment booked for this time slot"]);
+    exit();
+}
+$p_check->close();
 
 $medical_report_url = $_POST['medical_report_url'] ?? $data['medical_report_url'] ?? null;
 

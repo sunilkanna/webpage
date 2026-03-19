@@ -3,9 +3,10 @@ include 'db_connect.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 $appointment_id = $data['appointment_id'] ?? null;
+$user_id = $data['user_id'] ?? null;
 
-if (!$appointment_id) {
-    echo json_encode(["status" => "error", "message" => "Appointment ID required"]);
+if (!$appointment_id || !$user_id) {
+    echo json_encode(["status" => "error", "message" => "Appointment ID and User ID required"]);
     exit();
 }
 
@@ -25,6 +26,12 @@ $stmt->close();
 
 if (!$appointment) {
     echo json_encode(["status" => "error", "message" => "Appointment not found"]);
+    exit();
+}
+
+// Authorization: Only the counselor assigned to this appointment can end it
+if ($appointment['counselor_id'] != $user_id) {
+    echo json_encode(["status" => "error", "message" => "Unauthorized: Only the counselor can end the session"]);
     exit();
 }
 

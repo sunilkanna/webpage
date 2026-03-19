@@ -24,7 +24,8 @@ if ($result->num_rows == 0) {
             ['email_alerts', '1'],
             ['push_notifications', '1'],
             ['dark_mode', '0'],
-            ['two_factor_auth', '1']
+            ['two_factor_auth', '1'],
+            ['gst_percentage', '5']
         ];
         
         $stmt = $conn->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)");

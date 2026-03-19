@@ -36,12 +36,18 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.simats.genecare.ui.theme.GenecareTheme
 import com.simats.genecare.data.UserSession
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.app.Activity
 import androidx.activity.compose.BackHandler
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CounselorDashboardScreen(
     navController: NavController, 
@@ -50,7 +56,23 @@ fun CounselorDashboardScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val user = UserSession.getUser()
+
+    val pullToRefreshState = rememberPullToRefreshState()
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.fetchStats()
+        }
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            pullToRefreshState.startRefresh()
+        } else {
+            pullToRefreshState.endRefresh()
+        }
+    }
 
     BackHandler {
         (context as? Activity)?.finish()
@@ -59,54 +81,66 @@ fun CounselorDashboardScreen(
     Scaffold(
         containerColor = Color(0xFFF8F9FE) // Soft off-white background
     ) { padding ->
-        when (val state = uiState) {
-            is DashboardState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFF5C6BC0))
-                }
-            }
-            is DashboardState.Success -> {
-                val stats = state.stats.counselorStats
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                ) {
-                    // Header and Stats Section
-                    item {
-                        TopSection(onSignOut, navController, user?.fullName ?: "Counselor", stats)
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
-
-                    // Today's Schedule
-                    item {
-                        TodaysSchedule(
-                            appointments = stats?.todayAppointments ?: emptyList(),
-                            onViewAllClick = { navController.navigate("counselor_appointments") },
-                            onStartClick = { appointmentId -> navController.navigate("video-call/$appointmentId") }
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
-
-                    // Quick Actions
-                    item {
-                        QuickActionsSection(navController, stats?.pendingRequestsCount ?: 0)
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
-
-                    
-                    // Recent Reviews
-                    item {
-                        RecentReviewsSection(stats?.recentReviews ?: emptyList())
-                        Spacer(modifier = Modifier.height(24.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
+        ) {
+            when (val state = uiState) {
+                is DashboardState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color(0xFF5C6BC0))
                     }
                 }
-            }
-            is DashboardState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Error: ${state.message}", color = Color.Red, modifier = Modifier.clickable { viewModel.fetchStats() })
+                is DashboardState.Success -> {
+                    val stats = state.stats.counselorStats
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        // Header and Stats Section
+                        item {
+                            TopSection(onSignOut, navController, user?.fullName ?: "Counselor", stats)
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+
+                        // Today's Schedule
+                        item {
+                            TodaysSchedule(
+                                appointments = stats?.todayAppointments ?: emptyList(),
+                                onViewAllClick = { navController.navigate("counselor_appointments") },
+                                onStartClick = { appointmentId -> navController.navigate("video-call/$appointmentId") }
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+
+                        // Quick Actions
+                        item {
+                            QuickActionsSection(navController, stats?.pendingRequestsCount ?: 0)
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+
+                        
+                        // Recent Reviews
+                        item {
+                            RecentReviewsSection(stats?.recentReviews ?: emptyList())
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
+                }
+                is DashboardState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(text = "Error: ${state.message}", color = Color.Red, modifier = Modifier.clickable { viewModel.fetchStats() })
+                    }
                 }
             }
+
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                contentColor = Color(0xFF1A237E)
+            )
         }
     }
 }

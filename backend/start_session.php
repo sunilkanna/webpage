@@ -44,6 +44,32 @@ try {
         throw new Exception("Session not confirmed yet. Current status: " . $appointment['status']);
     }
 
+    // Time validation: Cannot join more than 5 minutes early
+    $appt_date = $appointment['appointment_date'];
+    $appt_time_str = $appointment['time_slot'];
+    
+    $appt_datetime = DateTime::createFromFormat('Y-m-d h:i A', "$appt_date $appt_time_str");
+    if (!$appt_datetime) {
+        $appt_datetime = DateTime::createFromFormat('Y-m-d g:i A', "$appt_date $appt_time_str");
+    }
+
+    if ($appt_datetime) {
+        $now = new DateTime();
+        $diff_seconds = $appt_datetime->getTimestamp() - $now->getTimestamp();
+        
+        // Allow joining up to 5 minutes (300 seconds) early
+        if ($diff_seconds > 300) {
+            echo json_encode([
+                "status" => "too_early",
+                "message" => "It's too early to join this session.",
+                "seconds_until_start" => $diff_seconds,
+                "appointment_time" => $appt_time_str,
+                "appointment_date" => $appt_date
+            ]);
+            exit();
+        }
+    }
+
     // Set session_start_time if not already set (first joiner triggers it)
     if (empty($appointment['session_start_time'])) {
         $update = $conn->prepare("UPDATE appointments SET session_start_time = NOW() WHERE id = ?");

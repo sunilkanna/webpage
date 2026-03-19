@@ -18,5 +18,6 @@ data class PatientReport(
     val date: String,
     val description: String,
     val url: String?,
+    val file_url: String? = null,
     val type: String? = "report" // "report" or "assessment"
 )

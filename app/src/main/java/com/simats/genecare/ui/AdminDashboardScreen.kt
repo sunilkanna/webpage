@@ -52,6 +52,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.simats.genecare.ui.theme.GenecareTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +67,22 @@ fun AdminDashboardScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val adminStats by viewModel.adminStats.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+
+    val pullToRefreshState = rememberPullToRefreshState()
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.fetchAdminStats()
+        }
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            pullToRefreshState.startRefresh()
+        } else {
+            pullToRefreshState.endRefresh()
+        }
+    }
 
 
     androidx.activity.compose.BackHandler {
@@ -69,13 +90,24 @@ fun AdminDashboardScreen(
     }
 
     Scaffold { innerPadding ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) {
-            item { AdminDashboardHeader(navController, onLogout = onLogout, stats = adminStats) }
-            item { QuickActions(navController, stats = adminStats) }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                item { AdminDashboardHeader(navController, onLogout = onLogout, stats = adminStats) }
+                item { QuickActions(navController, stats = adminStats) }
+            }
+
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                contentColor = Color(0xFF6A1B9A)
+            )
         }
     }
 }

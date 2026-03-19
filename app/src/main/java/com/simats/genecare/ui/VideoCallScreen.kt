@@ -75,6 +75,23 @@ fun VideoCallScreen(navController: NavController, appointmentId: Int = 1) {
         }
     }
 
+    // Auto-redirect when session ends (e.g., Doctor ends the call)
+    LaunchedEffect(state.sessionEnded) {
+        if (state.sessionEnded) {
+            val userType = com.simats.genecare.data.UserSession.getUserType()
+            webViewRef?.destroy()
+            if (userType == "Patient") {
+                navController.navigate("session_bill/$appointmentId") {
+                    popUpTo("video-call/$appointmentId") { inclusive = true }
+                }
+            } else {
+                navController.navigate("counselor_dashboard") {
+                    popUpTo("video-call/$appointmentId") { inclusive = true }
+                }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -133,7 +150,88 @@ fun VideoCallScreen(navController: NavController, appointmentId: Int = 1) {
                     )
                 }
             }
+            
+            state.secondsUntilSession > 0 -> {
+                // Wait Screen with Countdown
+                Column(
+                    modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Videocam,
+                        contentDescription = null,
+                        tint = Color(0xFF00ACC1),
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Session Starts Soon",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Your appointment with ${if (com.simats.genecare.data.UserSession.getUserType() == "Patient") "Dr. " + state.counselorName else state.patientName} is scheduled for ${state.appointmentTime ?: "the scheduled time"}.",
+                        color = Color.White.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.height(48.dp))
+                    
+                    // Countdown Display
+                    val minutes = state.secondsUntilSession / 60
+                    val seconds = state.secondsUntilSession % 60
+                    val timeStr = String.format("%02d:%02d", minutes, seconds)
+                    
+                    Text(
+                        text = timeStr,
+                        color = Color(0xFF00ACC1),
+                        fontSize = 64.sp,
+                        fontWeight = FontWeight.Light,
+                        letterSpacing = 4.sp
+                    )
+                    Text(
+                        text = "Time Remaining",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 14.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.height(48.dp))
+                    
+                    if (state.secondsUntilSession <= 0L) {
+                        Button(
+                            onClick = { viewModel.startSession(appointmentId) },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                        ) {
+                            val buttonText = if (com.simats.genecare.data.UserSession.getUserType() == "Counselor") 
+                                "Start Session" else "Join Session"
+                            Text(buttonText, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        }
+                    } else {
+                        // Progress indicator or message
+                        Text(
+                            text = "Please wait for the scheduled time.",
+                            color = Color.White.copy(alpha = 0.4f),
+                            fontSize = 14.sp
+                        )
+                    }
 
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    OutlinedButton(
+                        onClick = { navController.popBackStack() },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
+                    ) {
+                        Text("Back to Dashboard")
+                    }
+                }
+            }
+            
             state.meetingLink != null -> {
                 // Jitsi WebView - Full screen video call
                 AndroidView(
@@ -270,13 +368,15 @@ fun VideoCallScreen(navController: NavController, appointmentId: Int = 1) {
                     IconButton(
                         onClick = {
                             webViewRef?.destroy()
-                            viewModel.endCall(appointmentId) {
-                                val userType = com.simats.genecare.data.UserSession.getUserType()
-                                if (userType == "Patient") {
-                                    navController.navigate("session_bill/$appointmentId") {
-                                        popUpTo("video-call/$appointmentId") { inclusive = true }
-                                    }
-                                } else {
+                            val userType = com.simats.genecare.data.UserSession.getUserType()
+                            if (userType == "Patient") {
+                                // Patients just exit the call without ending the formal session
+                                navController.navigate("patient_dashboard") {
+                                    popUpTo("video-call/$appointmentId") { inclusive = true }
+                                }
+                            } else {
+                                // Counselors end the call officially
+                                viewModel.endCall(appointmentId) {
                                     navController.navigate("counselor_dashboard") {
                                         popUpTo("video-call/$appointmentId") { inclusive = true }
                                     }

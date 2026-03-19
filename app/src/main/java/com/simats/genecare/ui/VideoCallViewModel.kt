@@ -23,6 +23,8 @@ data class VideoCallState(
     val jwt: String? = null,
     val medicalReportUrl: String? = null,
     val patientReports: List<com.simats.genecare.data.model.SessionReport> = emptyList(),
+    val secondsUntilSession: Long = 0L,
+    val appointmentTime: String? = null,
     val errorMessage: String? = null
 )
 
@@ -38,7 +40,10 @@ class VideoCallViewModel : ViewModel() {
     private val _callStatus = MutableStateFlow<String>("Connecting...")
     val callStatus: StateFlow<String> = _callStatus.asStateFlow()
 
+    private var currentAppointmentId: Int? = null
+
     fun startSession(appointmentId: Int) {
+        currentAppointmentId = appointmentId
         val user = UserSession.getUser() ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
@@ -63,13 +68,25 @@ class VideoCallViewModel : ViewModel() {
                             jwt = body.jwt,
                             counselorName = body.counselorName ?: "Doctor",
                             patientName = body.patientName ?: "Patient",
-                            medicalReportUrl = body.medicalReportUrl,
-                            patientReports = body.patientReports ?: emptyList(),
-                            callStatus = "Connected"
+                                medicalReportUrl = body.medicalReportUrl,
+                                patientReports = body.patientReports ?: emptyList(),
+                                secondsUntilSession = 0L,
+                                callStatus = "Connected"
+                            )
+                            _callStatus.value = "Connected"
+                        }
+                    } else if (response.body()?.status == "too_early") {
+                        val body = response.body()!!
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            secondsUntilSession = body.secondsUntilStart ?: 0L,
+                            appointmentTime = body.appointmentTime,
+                            counselorName = body.counselorName ?: "Doctor",
+                            patientName = body.patientName ?: "Patient",
+                            callStatus = "Too Early"
                         )
-                        _callStatus.value = "Connected"
-                    }
-                } else {
+                        startCountdown()
+                    } else {
                     // Try to get error message from response body or error body
                     val msg = response.body()?.message
                         ?: try {
@@ -86,13 +103,66 @@ class VideoCallViewModel : ViewModel() {
                 _state.value = _state.value.copy(isLoading = false, callStatus = msg, errorMessage = msg)
                 _callStatus.value = msg
             }
+            
+            // Start polling for session completion (mainly for patients)
+            startStatusPolling(appointmentId)
         }
     }
 
+    private var pollingJob: kotlinx.coroutines.Job? = null
+
+    private fun startStatusPolling(appointmentId: Int) {
+        pollingJob?.cancel()
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(5000) // Poll every 5 seconds
+                try {
+                    val response = ApiClient.api.checkSessionReady(appointmentId)
+                    if (response.isSuccessful && response.body()?.status == "success") {
+                        if (response.body()?.appointmentStatus == "Completed") {
+                            _state.value = _state.value.copy(sessionEnded = true)
+                            // We might need to fetch final bill details here if needed
+                            break
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    private var countdownJob: kotlinx.coroutines.Job? = null
+
+    private fun startCountdown() {
+        countdownJob?.cancel()
+        countdownJob = viewModelScope.launch {
+            while (_state.value.secondsUntilSession > 0) {
+                kotlinx.coroutines.delay(1000)
+                val currentSeconds = _state.value.secondsUntilSession
+                if (currentSeconds <= 1L) {
+                    _state.value = _state.value.copy(secondsUntilSession = 0L)
+                    break
+                }
+                _state.value = _state.value.copy(secondsUntilSession = currentSeconds - 1)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        pollingJob?.cancel()
+        countdownJob?.cancel()
+    }
+
     fun endCall(appointmentId: Int, onCallEnded: () -> Unit) {
+        val user = UserSession.getUser() ?: return
         viewModelScope.launch {
             try {
-                val request = EndSessionRequest(appointmentId = appointmentId)
+                val request = EndSessionRequest(
+                    appointmentId = appointmentId,
+                    userId = user.id
+                )
                 val response = ApiClient.api.endSession(request)
                 if (response.isSuccessful && response.body()?.status == "success") {
                     val body = response.body()!!

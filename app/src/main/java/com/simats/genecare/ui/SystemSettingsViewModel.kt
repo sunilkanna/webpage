@@ -44,14 +44,18 @@ class SystemSettingsViewModel : ViewModel() {
 
     fun updateSetting(key: String, value: Boolean) {
         val stringValue = if (value) "1" else "0"
+        updateStringSetting(key, stringValue)
+    }
+
+    fun updateStringSetting(key: String, value: String) {
         viewModelScope.launch {
             try {
                 // Optimistically update UI
                 val currentSettings = _settings.value.toMutableMap()
-                currentSettings[key] = stringValue
+                currentSettings[key] = value
                 _settings.value = currentSettings
 
-                val response = repository.updateSystemSetting(key, stringValue)
+                val response = repository.updateSystemSetting(key, value)
                 if (!response.isSuccessful || response.body()?.status != "success") {
                     // Revert if failed
                     loadSettings()

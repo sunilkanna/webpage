@@ -37,9 +37,24 @@ class SessionBillViewModel : ViewModel() {
                     _appointmentDetails.value = appt
                     
                     if (appt != null) {
+                        // Fetch GST from system settings
+                        var gstRate = 0.05 // Default 5%
+                        try {
+                            val settingsResponse = repository.getSystemSettings()
+                            if (settingsResponse.isSuccessful && settingsResponse.body()?.status == "success") {
+                                val settings = settingsResponse.body()?.settings
+                                val gstString = settings?.get("gst_percentage")
+                                if (gstString != null) {
+                                    gstRate = (gstString.toDoubleOrNull() ?: 5.0) / 100.0
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
                         val fee = appt.consultationFee ?: 1000.0 // Default fallback
                         val platform = 50.0
-                        val gst = (fee + platform) * 0.18
+                        val gst = (fee + platform) * gstRate
                         val total = fee + platform + gst
                         
                         _billDetails.value = BillDetails(

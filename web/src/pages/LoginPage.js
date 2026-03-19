@@ -24,7 +24,13 @@ const LoginPage = () => {
 
             if (data.status === 'success') {
                 setAuthUser(data.user);
-                navigate('/dashboard');
+                
+                // Redirect based on role and verification status
+                if (data.user.user_type === 'Counselor' && data.user.verification_status !== 'Approved') {
+                    navigate('/counselor-pending');
+                } else {
+                    navigate('/dashboard');
+                }
             } else {
                 setError(data.message || 'Login failed');
             }
@@ -38,12 +44,12 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-            <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
+        <div className="auth-container">
+            <div className="auth-card">
                 <img src={logo} alt="Curogenea Logo" className="login-logo" />
-                <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Curogenea Login</h2>
+                <h2 className="text-center mb-4">Curogenea Login</h2>
 
-                {error && <div style={{ color: 'var(--error)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+                {error && <div className="alert alert-danger text-center">{error}</div>}
 
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">

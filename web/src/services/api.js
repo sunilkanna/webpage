@@ -31,7 +31,8 @@ export const appointmentService = {
     getAppointments: (userId) => api.get(`get_appointments.php?patient_id=${userId}`),
     getDetails: (appointmentId) => api.post('get_appointment_details.php', { appointment_id: appointmentId }),
     startSession: (appointmentId, userId) => api.post('start_session.php', { appointment_id: appointmentId, user_id: userId }),
-    endSession: (appointmentId) => api.post('end_session.php', { appointment_id: appointmentId }),
+    endSession: (appointmentId, userId) => api.post('end_session.php', { appointment_id: appointmentId, user_id: userId }),
+    checkSessionReady: (appointmentId) => api.get(`check_session_ready.php?appointment_id=${appointmentId}`),
 };
 
 export const counselorService = {
@@ -41,7 +42,15 @@ export const counselorService = {
     getAnalytics: (counselorId) => api.get(`get_counselor_analytics.php?counselor_id=${counselorId}`),
     getReports: (counselorId) => api.get(`get_counselor_reports.php?counselor_id=${counselorId}`),
     getAppointments: (counselorId) => api.get(`get_counselor_appointments.php?counselor_id=${counselorId}`),
-    updateAppointmentStatus: (appointmentId, status) => api.post('update_appointment_status.php', { appointment_id: appointmentId, status }),
+    updateAppointmentStatus: (appointmentId, status, rejectionReason = null) => {
+        const payload = { appointment_id: appointmentId, status };
+        if (rejectionReason) payload.rejection_reason = rejectionReason;
+        return api.post('update_appointment_status.php', payload);
+    },
+    uploadCertificate: (formData) => api.post('upload_certificate.php', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    saveQualifications: (qualificationData) => api.post('save_counselor_qualifications.php', qualificationData),
 };
 
 export const reportService = {

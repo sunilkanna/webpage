@@ -8,7 +8,12 @@ header("Access-Control-Allow-Origin: *");
 $file = $_GET['file'] ?? '';
 
 // Basic security check: prevent directory traversal
-$file = basename($file);
+if (strpos($file, '..') !== false) {
+    header("HTTP/1.0 403 Forbidden");
+    echo "Access denied.";
+    exit;
+}
+
 $filepath = 'uploads/' . $file;
 
 if (empty($file) || !file_exists($filepath)) {

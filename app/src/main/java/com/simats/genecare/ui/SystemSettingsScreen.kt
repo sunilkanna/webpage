@@ -76,6 +76,33 @@ fun SystemSettingsScreen(navController: NavController) {
                     onCheckedChange = { viewModel.updateSetting("maintenance_mode", it) }
                 )
                 
+                // GST Percentage Setting
+                var gstText by remember(settings["gst_percentage"]) { 
+                    mutableStateOf(settings["gst_percentage"] ?: "5") 
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Palette, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "GST Percentage (%)", fontWeight = FontWeight.Medium)
+                        Text(text = "Adjust the tax percentage for billing", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    }
+                    OutlinedTextField(
+                        value = gstText,
+                        onValueChange = { 
+                            gstText = it
+                            if (it.isNotEmpty()) viewModel.updateStringSetting("gst_percentage", it)
+                        },
+                        modifier = Modifier.width(80.dp),
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                    )
+                }
+                
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 // Notifications Section

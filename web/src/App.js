@@ -26,6 +26,7 @@ import PatientsListPage from './pages/PatientsListPage';
 import NotificationsPage from './pages/NotificationsPage';
 import CounselorAnalyticsPage from './pages/CounselorAnalyticsPage';
 import MyResultsPage from './pages/MyResultsPage';
+import CounselorPendingPage from './pages/CounselorPendingPage';
 import Layout from './components/Layout';
 
 const NotFound = () => <div className="container"><h1>404 Not Found</h1></div>;
@@ -39,11 +40,16 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename="/genecare-webapp">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/counselor-pending" element={
+            <ProtectedRoute>
+              <CounselorPendingPage />
+            </ProtectedRoute>
+          } />
           <Route
             path="/dashboard"
             element={
@@ -73,7 +79,7 @@ function App() {
             }
           />
           <Route
-            path="/book"
+            path="/book-appointment"
             element={
               <ProtectedRoute>
                 <Layout>

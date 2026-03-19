@@ -16,6 +16,9 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,14 +44,6 @@ fun ReportsAndLogsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
-    
-    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
-    ) { uri: android.net.Uri? ->
-        uri?.let {
-            viewModel.uploadReport(it, context)
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -69,20 +64,7 @@ fun ReportsAndLogsScreen(
                 )
             )
         },
-        floatingActionButton = {
-            if (uiState.selectedTab == 0) {
-                ExtendedFloatingActionButton(
-                    onClick = { launcher.launch("*/*") },
-                    containerColor = Color(0xFF8E24AA),
-                    contentColor = Color.White,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Upload Report")
-                }
-            }
-        },
+        floatingActionButton = {},
         containerColor = Color(0xFFF5F7FA)
     ) { padding ->
         Column(
@@ -137,7 +119,14 @@ fun ReportsAndLogsScreen(
                     ) {
                         if (uiState.selectedTab == 0) {
                             items(uiState.reports) { report ->
-                                ReportCard(report)
+                                ReportCard(report) { url ->
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        // Handle error
+                                    }
+                                }
                             }
                         } else {
                             items(uiState.logs) { log ->
@@ -175,7 +164,7 @@ fun TabButton(
 }
 
 @Composable
-fun ReportCard(report: ReportItem) {
+fun ReportCard(report: ReportItem, onViewClick: (String) -> Unit) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -207,14 +196,16 @@ fun ReportCard(report: ReportItem) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(report.title, fontWeight = FontWeight.Bold, color = Color(0xFF0D1B2A))
                 Text(
-                    "${report.date} • ${report.type} • ${report.size}",
+                    "${report.date} • ${report.type}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
             }
             
-            IconButton(onClick = { /* TODO: Download logic */ }) {
-                Icon(Icons.Default.Download, contentDescription = "Download", tint = Color.Gray)
+            if (report.fileUrl != null) {
+                IconButton(onClick = { onViewClick(report.fileUrl) }) {
+                    Icon(Icons.Default.Visibility, contentDescription = "View", tint = Color(0xFF1976D2))
+                }
             }
         }
     }

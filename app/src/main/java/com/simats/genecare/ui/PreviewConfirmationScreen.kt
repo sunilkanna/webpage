@@ -329,7 +329,7 @@ fun PreviewConfirmationScreen(
             Button(
                 onClick = { 
                     UserSession.getUserId()?.let { userId ->
-                        viewModel.submitQualification(userId)
+                        viewModel.submitQualification(userId, context)
                     } ?: run {
                         Toast.makeText(context, "User ID not found. Please log in again.", Toast.LENGTH_SHORT).show()
                     }

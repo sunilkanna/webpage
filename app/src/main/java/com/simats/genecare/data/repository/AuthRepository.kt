@@ -101,8 +101,8 @@ class AuthRepository {
         return api.getCounselorAnalytics(counselorId)
     }
 
-    suspend fun updateAppointmentStatus(appointmentId: String, status: String): Response<GenericResponse> {
-        val request = com.simats.genecare.data.model.UpdateAppointmentStatusRequest(appointmentId.toInt(), status)
+    suspend fun updateAppointmentStatus(appointmentId: String, status: String, rejectionReason: String? = null): Response<GenericResponse> {
+        val request = com.simats.genecare.data.model.UpdateAppointmentStatusRequest(appointmentId.toInt(), status, rejectionReason)
         return api.updateAppointmentStatus(request)
     }
 
@@ -111,6 +111,12 @@ class AuthRepository {
         val body = okhttp3.MultipartBody.Part.createFormData("file", file.name, requestFile)
         val patientIdPart = patientId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
         return api.uploadReport(patientIdPart, body)
+    }
+
+    suspend fun uploadCertificate(file: java.io.File): Response<GenericResponse> {
+        val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        val body = okhttp3.MultipartBody.Part.createFormData("certificate", file.name, requestFile)
+        return api.uploadCertificate(body)
     }
 
     suspend fun submitFeedback(appointmentId: Int, patientId: Int, rating: Int, comments: String): Response<GenericResponse> {

@@ -71,6 +71,14 @@ const SystemSettingsPage = () => {
                                 onChange={e => setSettings({ ...settings, platform_fee: e.target.value })}
                             />
                         </div>
+                        <div className="input-group">
+                            <label>GST Percentage (%)</label>
+                            <input
+                                type="number"
+                                value={settings.gst_percentage}
+                                onChange={e => setSettings({ ...settings, gst_percentage: e.target.value })}
+                            />
+                        </div>
                         <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
                             <input
                                 type="checkbox"

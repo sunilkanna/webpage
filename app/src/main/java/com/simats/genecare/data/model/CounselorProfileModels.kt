@@ -20,7 +20,8 @@ data class UpdateConsultationFeeRequest(
 
 data class UpdateAppointmentStatusRequest(
     @SerializedName("appointment_id") val appointmentId: Int,
-    @SerializedName("status") val status: String
+    @SerializedName("status") val status: String,
+    @SerializedName("rejection_reason") val rejectionReason: String? = null
 )
 
 data class CounselorProfileResponse(

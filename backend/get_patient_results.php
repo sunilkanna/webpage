@@ -17,7 +17,7 @@ $risk_assessment = $risk_result->fetch_assoc();
 $risk_stmt->close();
 
 // Fetch patient reports
-$reports_stmt = $conn->prepare("SELECT file_name as title, 'Uploaded' as status, uploaded_at as date, 'Patient uploaded report' as description FROM patient_reports WHERE patient_id = ? ORDER BY uploaded_at DESC");
+$reports_stmt = $conn->prepare("SELECT file_name as title, 'Uploaded' as status, uploaded_at as date, 'Patient uploaded report' as description, file_url FROM patient_reports WHERE patient_id = ? ORDER BY uploaded_at DESC");
 $reports_stmt->bind_param("i", $patient_id);
 $reports_stmt->execute();
 $reports_result = $reports_stmt->get_result();

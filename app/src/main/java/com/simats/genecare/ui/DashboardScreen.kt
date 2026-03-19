@@ -33,12 +33,18 @@ import androidx.navigation.NavController
 import com.simats.genecare.data.UserSession
 import com.simats.genecare.ui.theme.GenecareTheme
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.*
 import android.app.Activity
 import androidx.activity.compose.BackHandler
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     navController: NavController,
@@ -47,7 +53,23 @@ fun DashboardScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val user = UserSession.getUser()
+
+    val pullToRefreshState = rememberPullToRefreshState()
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.fetchStats()
+        }
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            pullToRefreshState.startRefresh()
+        } else {
+            pullToRefreshState.endRefresh()
+        }
+    }
 
     BackHandler {
         (context as? Activity)?.finish()
@@ -56,13 +78,18 @@ fun DashboardScreen(
     Scaffold(
         containerColor = Color(0xFFF5F7FA) // Light grey background
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState())
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
             Spacer(modifier = Modifier.height(24.dp))
 
             // Header Section
@@ -126,6 +153,13 @@ fun DashboardScreen(
             }
             
             Spacer(modifier = Modifier.height(32.dp))
+            }
+
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                contentColor = Color(0xFF00ACC1)
+            )
         }
     }
 }

@@ -37,10 +37,50 @@ const BookAppointmentPage = () => {
         fetchCounselors();
     }, []);
 
+    const isTimeSlotPast = (slotTimeStr) => {
+        if (!appointmentData.date) return false;
+
+        const today = new Date();
+        const selectedDate = new Date(appointmentData.date);
+
+        // If selected date is in the future, slot is not past
+        if (selectedDate.setHours(0, 0, 0, 0) > today.setHours(0, 0, 0, 0)) {
+            return false;
+        }
+
+        // If selected date is in the past, all slots are past
+        if (selectedDate.setHours(0, 0, 0, 0) < today.setHours(0, 0, 0, 0)) {
+            return true;
+        }
+
+        // If selected date is today, check the time
+        try {
+            const [time, modifier] = slotTimeStr.split(' ');
+            let [hours, minutes] = time.split(':');
+            hours = parseInt(hours);
+
+            if (modifier === 'PM' && hours < 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+
+            const slotDate = new Date();
+            slotDate.setHours(hours, parseInt(minutes), 0, 0);
+
+            return slotDate < new Date();
+        } catch (e) {
+            console.error('Error parsing time slot:', e);
+            return false;
+        }
+    };
+
     const handleBook = async (e) => {
         e.preventDefault();
         if (!selectedCounselor) {
             alert('Please select a counselor');
+            return;
+        }
+
+        if (isTimeSlotPast(appointmentData.time)) {
+            alert('This time slot has already passed. Please select a later time.');
             return;
         }
 
@@ -145,17 +185,25 @@ const BookAppointmentPage = () => {
                                 <label>Available Time Slots</label>
                                 <div className="time-slot-grid">
                                     {[
-                                        '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-                                        '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'
-                                    ].map((time) => (
-                                        <div
-                                            key={time}
-                                            className={`time-slot-item ${appointmentData.time === time ? 'selected' : ''}`}
-                                            onClick={() => setAppointmentData({ ...appointmentData, time })}
-                                        >
-                                            {time}
-                                        </div>
-                                    ))}
+                                        '09:00 AM', '10:30 AM', '02:00 PM', '03:30 PM', '05:00 PM'
+                                    ].map((time) => {
+                                        const isPast = isTimeSlotPast(time);
+                                        return (
+                                            <div
+                                                key={time}
+                                                className={`time-slot-item ${appointmentData.time === time ? 'selected' : ''} ${isPast ? 'disabled' : ''}`}
+                                                onClick={() => !isPast && setAppointmentData({ ...appointmentData, time })}
+                                                style={{
+                                                    opacity: isPast ? 0.5 : 1,
+                                                    cursor: isPast ? 'not-allowed' : 'pointer',
+                                                    pointerEvents: isPast ? 'none' : 'auto',
+                                                    backgroundColor: isPast ? '#f5f5f5' : (appointmentData.time === time ? 'var(--primary-color)' : 'white')
+                                                }}
+                                            >
+                                                {time}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

@@ -10,6 +10,9 @@ const SessionRequestsPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [actionLoading, setActionLoading] = useState(null);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectReason, setRejectReason] = useState('');
+    const [rejectingId, setRejectingId] = useState(null);
 
     useEffect(() => {
         fetchRequests();
@@ -34,14 +37,26 @@ const SessionRequestsPage = () => {
         }
     };
 
-    const handleAction = async (appointmentId, status) => {
+    const openRejectModal = (appointmentId) => {
+        setRejectingId(appointmentId);
+        setRejectReason('');
+        setShowRejectModal(true);
+    };
+
+    const confirmReject = async () => {
+        if (!rejectReason.trim()) return;
+        setShowRejectModal(false);
+        await handleAction(rejectingId, 'Cancelled', rejectReason.trim());
+    };
+
+    const handleAction = async (appointmentId, status, rejectionReason = null) => {
         try {
             setActionLoading(appointmentId);
-            const response = await counselorService.updateAppointmentStatus(appointmentId, status);
+            const response = await counselorService.updateAppointmentStatus(appointmentId, status, rejectionReason);
             if (response.data.status === 'success') {
                 // Remove from local state
                 setRequests(requests.filter(req => req.id !== appointmentId));
-                alert(`Session ${status === 'Confirmed' ? 'confirmed' : 'cancelled'} successfully!`);
+                alert(`Session ${status === 'Confirmed' ? 'confirmed' : 'rejected'} successfully!`);
             } else {
                 alert(response.data.message);
             }
@@ -91,7 +106,7 @@ const SessionRequestsPage = () => {
                             </div>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button
-                                    onClick={() => handleAction(req.id, 'Cancelled')}
+                                    onClick={() => openRejectModal(req.id)}
                                     className="btn"
                                     style={{ backgroundColor: '#fff', border: '1px solid #dfe1e6', color: '#666' }}
                                     disabled={actionLoading === req.id}
@@ -109,6 +124,49 @@ const SessionRequestsPage = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Rejection Reason Modal */}
+            {showRejectModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                }}>
+                    <div className="card" style={{ maxWidth: '480px', width: '90%', padding: '2rem' }}>
+                        <h3 style={{ margin: '0 0 1rem 0', color: 'var(--indigo-deep)' }}>Reason for Rejection</h3>
+                        <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                            Please explain to the patient why you are declining this session request.
+                        </p>
+                        <textarea
+                            value={rejectReason}
+                            onChange={e => setRejectReason(e.target.value)}
+                            placeholder="e.g. I am unavailable at the requested time. Please try booking a different slot."
+                            rows={4}
+                            style={{
+                                width: '100%', padding: '0.75rem', borderRadius: '8px',
+                                border: '1px solid #dfe1e6', resize: 'vertical', fontFamily: 'inherit',
+                                fontSize: '0.95rem', boxSizing: 'border-box'
+                            }}
+                        />
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+                            <button
+                                className="btn"
+                                style={{ backgroundColor: '#fff', border: '1px solid #dfe1e6', color: '#666' }}
+                                onClick={() => setShowRejectModal(false)}
+                            >Cancel</button>
+                            <button
+                                className="btn"
+                                style={{
+                                    backgroundColor: rejectReason.trim() ? '#de350b' : '#ccc',
+                                    color: 'white', cursor: rejectReason.trim() ? 'pointer' : 'not-allowed'
+                                }}
+                                disabled={!rejectReason.trim()}
+                                onClick={confirmReject}
+                            >Confirm Rejection</button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

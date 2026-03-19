@@ -82,11 +82,14 @@ data class StartSessionResponse(
     @SerializedName("patient_reports") val patientReports: List<SessionReport>? = null,
     @SerializedName("jwt") val jwt: String? = null,
     @SerializedName("jwt_error") val jwtError: String? = null,
-    @SerializedName("is_moderator") val isModerator: Boolean? = false
+    @SerializedName("is_moderator") val isModerator: Boolean? = false,
+    @SerializedName("seconds_until_start") val secondsUntilStart: Long? = 0L,
+    @SerializedName("appointment_time") val appointmentTime: String? = null
 )
 
 data class EndSessionRequest(
-    @SerializedName("appointment_id") val appointmentId: Int
+    @SerializedName("appointment_id") val appointmentId: Int,
+    @SerializedName("user_id") val userId: Int
 )
 
 data class EndSessionResponse(

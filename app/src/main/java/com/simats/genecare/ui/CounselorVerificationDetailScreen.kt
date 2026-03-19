@@ -225,10 +225,18 @@ fun UploadedCertificateCard(certificateUrl: String) {
             Button(
                 onClick = { 
                     try {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(certificateUrl))
-                        context.startActivity(intent)
+                        if (certificateUrl.isNotEmpty()) {
+                            if (certificateUrl.contains("example.com")) {
+                                android.widget.Toast.makeText(context, "This record uses a dummy certificate. Please ask the counselor to re-submit.", android.widget.Toast.LENGTH_LONG).show()
+                            } else {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(certificateUrl))
+                                context.startActivity(intent)
+                            }
+                        } else {
+                            android.widget.Toast.makeText(context, "No certificate URL available", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     } catch (e: Exception) {
-                        // Handle error or show toast
+                        android.widget.Toast.makeText(context, "Error opening document: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp),

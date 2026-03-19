@@ -16,12 +16,16 @@ class AdminDashboardViewModel : ViewModel() {
     private val _adminStats = MutableStateFlow<AdminStatsResponse?>(null)
     val adminStats: StateFlow<AdminStatsResponse?> = _adminStats.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     init {
         fetchAdminStats()
     }
 
     fun fetchAdminStats() {
         viewModelScope.launch {
+            _isRefreshing.value = true
             try {
                 val response = authRepository.getAdminStats()
                 if (response.isSuccessful && response.body()?.status == "success") {
@@ -31,6 +35,8 @@ class AdminDashboardViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 // Handle exception
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }

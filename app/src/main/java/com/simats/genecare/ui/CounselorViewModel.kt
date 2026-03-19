@@ -215,13 +215,47 @@ class CounselorViewModel : ViewModel() {
         )
     }
 
-    fun submitQualification(userId: Int) {
+    private fun getFileFromUri(context: android.content.Context, uri: Uri, fileName: String): java.io.File? {
+        val contentResolver = context.contentResolver
+        val extension = fileName.substringAfterLast('.', "")
+        val suffix = if (extension.isNotEmpty()) ".$extension" else ""
+        val tempFile = java.io.File(context.cacheDir, "temp_cert_${System.currentTimeMillis()}$suffix")
+        return try {
+            contentResolver.openInputStream(uri)?.use { input ->
+                java.io.FileOutputStream(tempFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            tempFile
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun submitQualification(userId: Int, context: android.content.Context) {
         viewModelScope.launch {
             _submissionState.value = "Loading"
             try {
                 val data = _qualificationData.value
-                // For demo, using dummy certificate URL if URI is present
-                val certUrl = if (data.certificateUri != null) "https://example.com/certificate.pdf" else ""
+                val uri = data.certificateUri
+                val fileName = data.certificateFileName
+                
+                var certUrl = ""
+                if (uri != null) {
+                    val file = getFileFromUri(context, uri, fileName)
+                    if (file != null) {
+                        val uploadResponse = authRepository.uploadCertificate(file)
+                        if (uploadResponse.isSuccessful && uploadResponse.body()?.status == "success") {
+                            certUrl = uploadResponse.body()?.fileUrl ?: ""
+                        } else {
+                            _submissionState.value = "Error: File upload failed - ${uploadResponse.body()?.message ?: uploadResponse.message()}"
+                            return@launch
+                        }
+                    } else {
+                        _submissionState.value = "Error: Could not process certificate file"
+                        return@launch
+                    }
+                }
                 
                 val response = authRepository.saveCounselorQualifications(
                     userId = userId,
@@ -375,11 +409,11 @@ class CounselorViewModel : ViewModel() {
         }
     }
 
-    fun rejectSession(requestId: String) {
+    fun rejectSession(requestId: String, reason: String) {
         viewModelScope.launch {
             _actionLoadingStates.value = _actionLoadingStates.value + (requestId to true)
             try {
-                val response = authRepository.updateAppointmentStatus(requestId, "Cancelled")
+                val response = authRepository.updateAppointmentStatus(requestId, "Cancelled", reason)
                 if (response.isSuccessful && response.body()?.status == "success") {
                     fetchCounselorAppointments()
                 }

@@ -26,7 +26,8 @@ data class ReportItem(
     val title: String,
     val date: String,
     val type: String,
-    val size: String
+    val size: String,
+    val fileUrl: String? = null
 )
 
 data class ReportsAndLogsState(
@@ -37,7 +38,6 @@ data class ReportsAndLogsState(
 )
 
 class ReportsAndLogsViewModel : ViewModel() {
-    private val repository = com.simats.genecare.data.repository.AuthRepository()
 
     private val _uiState = MutableStateFlow(ReportsAndLogsState())
     val uiState: StateFlow<ReportsAndLogsState> = _uiState.asStateFlow()
@@ -65,15 +65,21 @@ class ReportsAndLogsViewModel : ViewModel() {
                     }
                 } else emptyList()
 
-                // Fetch Real Reports
-                val reportsResponse = ApiClient.api.getPatientResults(user.id)
+                // Fetch Reports (All for Admin, Patient Specific for others)
+                val reportsResponse = if (user.userType == "Admin") {
+                    ApiClient.api.getAllReports()
+                } else {
+                    ApiClient.api.getPatientResults(user.id)
+                }
+
                 val reports = if (reportsResponse.isSuccessful && reportsResponse.body()?.status == "success") {
                     reportsResponse.body()?.reports?.map {
                         ReportItem(
                             title = it.title,
                             date = it.date,
-                            type = "PDF", // Defaulting for display
-                            size = "N/A"
+                            type = it.type ?: "PDF",
+                            size = "N/A",
+                            fileUrl = it.file_url ?: it.url
                         )
                     } ?: emptyList()
                 } else emptyList()
@@ -84,26 +90,6 @@ class ReportsAndLogsViewModel : ViewModel() {
                     isLoading = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false)
-            }
-        }
-    }
-
-    fun uploadReport(uri: android.net.Uri, context: android.content.Context) {
-        val userId = com.simats.genecare.data.UserSession.getUserId() ?: return
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            try {
-                val file = getFileFromUri(context, uri)
-                if (file != null) {
-                    val response = repository.uploadReport(userId, file)
-                    if (response.isSuccessful && response.body()?.status == "success") {
-                        loadData() // Refresh list
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
                 _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }

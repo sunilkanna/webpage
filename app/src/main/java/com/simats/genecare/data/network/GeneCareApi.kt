@@ -206,6 +206,9 @@ interface GeneCareApi {
     @GET("get_patient_results.php")
     suspend fun getPatientResults(@retrofit2.http.Query("patient_id") patientId: Int): Response<com.simats.genecare.data.model.GetPatientResultsResponse>
 
+    @GET("get_all_reports.php")
+    suspend fun getAllReports(): Response<com.simats.genecare.data.model.GetPatientResultsResponse>
+
     @POST("update_appointment_status.php")
     suspend fun updateAppointmentStatus(
         @Body request: com.simats.genecare.data.model.UpdateAppointmentStatusRequest
@@ -217,6 +220,12 @@ interface GeneCareApi {
         @retrofit2.http.Part("patient_id") patientId: okhttp3.RequestBody, 
         @retrofit2.http.Part file: okhttp3.MultipartBody.Part
     ): Response<GenericResponse>
+
+    @retrofit2.http.Multipart
+    @POST("upload_certificate.php")
+    suspend fun uploadCertificate(
+        @retrofit2.http.Part certificate: okhttp3.MultipartBody.Part
+    ): Response<com.simats.genecare.data.model.GenericResponse>
 
     @GET("get_counselor_reports.php")
     suspend fun getCounselorReports(

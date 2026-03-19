@@ -21,6 +21,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -133,6 +136,9 @@ fun SessionRequestItem(
     isLoading: Boolean = false,
     onViewReport: (String) -> Unit = {}
 ) {
+    var showRejectDialog by remember { mutableStateOf(false) }
+    var rejectReason by remember { mutableStateOf("") }
+
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -251,7 +257,10 @@ fun SessionRequestItem(
                 }
                 
                 Button(
-                    onClick = { viewModel.rejectSession(request.id) },
+                    onClick = {
+                        rejectReason = ""
+                        showRejectDialog = true
+                    },
                     enabled = !isLoading,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)), // Red
@@ -271,6 +280,49 @@ fun SessionRequestItem(
                 }
             }
         }
+    }
+
+    // Rejection Reason Dialog
+    if (showRejectDialog) {
+        AlertDialog(
+            onDismissRequest = { showRejectDialog = false },
+            title = { Text("Reason for Rejection", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text(
+                        "Please explain why you are declining this session request.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = rejectReason,
+                        onValueChange = { rejectReason = it },
+                        placeholder = { Text("e.g. I am unavailable at the requested time.") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 5
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRejectDialog = false
+                        viewModel.rejectSession(request.id, rejectReason.trim())
+                    },
+                    enabled = rejectReason.trim().isNotEmpty(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                ) {
+                    Text("Confirm Rejection", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRejectDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

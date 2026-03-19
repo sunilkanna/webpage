@@ -19,6 +19,9 @@ class DashboardViewModel(private val repository: DashboardRepository = Dashboard
     private val _uiState = MutableStateFlow<DashboardState>(DashboardState.Loading)
     val uiState = _uiState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     init {
         viewModelScope.launch {
             UserSession.currentUser.collect { user ->
@@ -37,7 +40,11 @@ class DashboardViewModel(private val repository: DashboardRepository = Dashboard
         }
 
         viewModelScope.launch {
-            _uiState.value = DashboardState.Loading
+            _isRefreshing.value = true
+            // Only show full loading if we don't have data yet
+            if (_uiState.value !is DashboardState.Success) {
+                _uiState.value = DashboardState.Loading
+            }
             try {
                 // Fix: Use user.userType (camelCase) instead of user_type
                 // Fix: DashboardStatsResponse might need to have 'message' field handled if null
@@ -54,6 +61,8 @@ class DashboardViewModel(private val repository: DashboardRepository = Dashboard
                     else -> e.message ?: "Network error occurred"
                 }
                 _uiState.value = DashboardState.Error(errorMessage)
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }
