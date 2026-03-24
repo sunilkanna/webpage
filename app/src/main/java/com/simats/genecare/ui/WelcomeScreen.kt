@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.simats.genecare.R
 import com.simats.genecare.ui.theme.GenecareTheme
+import com.simats.genecare.data.UserSession
 
 @Composable
 fun WelcomeScreen(navController: NavController) {
@@ -60,26 +61,49 @@ fun WelcomeScreen(navController: NavController) {
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge
         )
-        Spacer(modifier = Modifier.height(32.dp))
+        val isLoggedIn = UserSession.isLoggedIn()
+        val userType = UserSession.getUserType()
+
         Button(
-            onClick = { navController.navigate("create_account") },
+            onClick = { 
+                if (isLoggedIn) {
+                    val destination = when (userType) {
+                        "Patient" -> "dashboard"
+                        "Admin" -> "admin_dashboard"
+                        "Counselor", "Doctor/Counselor" -> {
+                            val user = UserSession.getUser()
+                            if (user?.verificationStatus == "Approved") "counselor_dashboard"
+                            else "counselor_pending_dashboard"
+                        }
+                        else -> "dashboard"
+                    }
+                    navController.navigate(destination) {
+                        popUpTo("welcome") { inclusive = true }
+                    }
+                } else {
+                    navController.navigate("create_account")
+                }
+            },
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF008080))
         ) {
-            Text(text = "Get Started")
+            Text(text = if (isLoggedIn) "Go to Dashboard" else "Get Started")
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = "Arrow Forward"
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedButton(
-            onClick = { navController.navigate("sign_in") },
-            shape = RoundedCornerShape(50),
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            border = BorderStroke(1.dp, Color(0xFF008080))
-        ) {
-            Text(text = "Sign In", color = Color(0xFF008080))
+        
+        if (!isLoggedIn) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = { navController.navigate("sign_in") },
+                shape = RoundedCornerShape(50),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                border = BorderStroke(1.dp, Color(0xFF008080))
+            ) {
+                Text(text = "Sign In", color = Color(0xFF008080))
+            }
         }
         Spacer(modifier = Modifier.height(32.dp))
     }

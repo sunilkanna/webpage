@@ -32,21 +32,7 @@ fun SplashScreen(navController: NavController) {
     LaunchedEffect(key1 = true) {
         delay(2000L) // 2-second delay
         
-        val nextDestination = if (UserSession.isLoggedIn()) {
-            when (UserSession.getUserType()) {
-                "Patient" -> "dashboard"
-                "Doctor/Counselor", "Counselor" -> {
-                    // Route to dashboard if approved, else pending
-                    val user = UserSession.getUser()
-                    if (user?.verificationStatus == "Approved") "counselor_dashboard"
-                    else "counselor_pending_dashboard"
-                }
-                "Admin" -> "admin_dashboard"
-                else -> "dashboard"
-            }
-        } else {
-            "welcome"
-        }
+        val nextDestination = "welcome"
 
         navController.navigate(nextDestination) {
             popUpTo("splash") { inclusive = true }
