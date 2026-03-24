@@ -157,7 +157,7 @@ fun SystemSettingsScreen(navController: NavController) {
                         Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF1976D2))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text("GeneCare Platform", fontWeight = FontWeight.Bold)
+                            Text("Curogenea Platform", fontWeight = FontWeight.Bold)
                             Text("Version 1.0.0 (Build 20260209)", style = MaterialTheme.typography.bodySmall)
                         }
                     }

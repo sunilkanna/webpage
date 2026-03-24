@@ -74,18 +74,18 @@ fun SplashScreen(navController: NavController) {
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "GeneCare Logo",
             modifier = Modifier
-                .size(150.dp) // Adjust size as needed
+                .size(150.dp)
                 .padding(bottom = 16.dp)
         )
         Text(
-            text = "Curogenea",
+            text = "GeneCare",
             fontSize = 48.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
             textAlign = TextAlign.Center
         )
         Text(
-            text = "Personalized Genetic Counseling & Follow-Up Care",
+            text = "Personalized Genetic Counseling & Care",
             color = Color.White,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)

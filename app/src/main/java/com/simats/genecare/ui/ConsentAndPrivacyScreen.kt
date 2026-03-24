@@ -113,7 +113,7 @@ fun ConsentAndPrivacyScreen(navController: NavController) {
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                     Text(
-                        text = "GeneCare is committed to protecting your privacy and securing your genetic information. By using our platform, you agree to the following:",
+                        text = "Curogenea is committed to protecting your privacy and securing your genetic information. By using our platform, you agree to the following:",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray,
                         modifier = Modifier.padding(bottom = 16.dp)

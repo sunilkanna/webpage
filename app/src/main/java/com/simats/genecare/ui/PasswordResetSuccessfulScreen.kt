@@ -101,7 +101,7 @@ fun PasswordResetSuccessfulScreen(navController: NavController) {
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                     .padding(16.dp),
             ) {
-                Text("Security Tip: Never share your password with anyone. GeneCare will never ask for your password via email or phone.", fontSize = 12.sp)
+                Text("Security Tip: Never share your password with anyone. Curogenea will never ask for your password via email or phone.", fontSize = 12.sp)
             }
         }
     }
