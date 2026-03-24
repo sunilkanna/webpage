@@ -78,7 +78,7 @@ fun SplashScreen(navController: NavController) {
                 .padding(bottom = 16.dp)
         )
         Text(
-            text = "GeneCare",
+            text = "Curogenea",
             fontSize = 48.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,

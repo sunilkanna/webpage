@@ -145,7 +145,7 @@ fun CreateAccountScreen(
             }
             Spacer(modifier = Modifier.height(32.dp))
             Text("Create Account", style = MaterialTheme.typography.headlineLarge)
-            Text("Join GeneCare to start your personalized health journey")
+            Text("Join Curogenea to start your personalized health journey")
             Spacer(modifier = Modifier.height(32.dp))
             OutlinedTextField(
                 value = fullName,
